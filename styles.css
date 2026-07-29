@@ -93,7 +93,7 @@ button.ghost { background: transparent; }
 button.sm { padding: 7px 12px; font-size: 13px; }
 .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); font-size: 13px; color: var(--text); }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); font-size: 13px; color: var(--text); cursor: pointer; }
 .chip.on { background: rgba(255,123,160,0.16); border-color: var(--pink); color: var(--pink-deep); font-weight: 600; }
 
 .item { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); }
