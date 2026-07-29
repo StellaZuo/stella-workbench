@@ -100,15 +100,23 @@
     <!-- GEO 创业业务 -->
     <section id="sec-geo" class="section">
       <div class="card">
+        <h2>📊 业务全景 <span class="meta" style="font-size:12px;font-weight:400" id="geo-asof"></span></h2>
+        <div id="geo-overview"></div>
+        <p class="meta" style="color:var(--muted);padding:6px 2px 0">脱敏聚合 · 仅分布与计数，不含客户名。点 🔄 同步最新。</p>
+      </div>
+
+      <div class="card">
         <h2>💼 客户台账</h2>
         <div class="row">
           <div class="field" style="flex:2"><input id="geo-search" type="text" placeholder="搜索客户名 / 行业" /></div>
           <div class="field"><select id="geo-filter">
             <option value="">全部状态</option>
             <option value="签约">签约</option>
-            <option value="进行中">进行中</option>
-            <option value="意向">意向</option>
+            <option value="已成交">已成交</option>
+            <option value="打单">打单</option>
+            <option value="商机">商机</option>
             <option value="渠道">渠道</option>
+            <option value="业务合伙人">业务合伙人</option>
           </select></div>
         </div>
         <div id="geo-list" style="margin-top:10px"></div>
