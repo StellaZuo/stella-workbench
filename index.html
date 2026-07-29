@@ -99,11 +99,50 @@
 
     <!-- GEO 创业业务 -->
     <section id="sec-geo" class="section">
-      <div class="placeholder">
-        <div class="big">💼</div>
-        <p>GEO 创业业务管理模块<br/>（客户台账 / 内容运维 / PPT物料 / 会议支撑）</p>
-        <p style="margin-top:8px">阶段三接入，将融合现有客户台账数据。</p>
+      <div class="card">
+        <h2>💼 客户台账</h2>
+        <div class="row">
+          <div class="field" style="flex:2"><input id="geo-search" type="text" placeholder="搜索客户名 / 行业" /></div>
+          <div class="field"><select id="geo-filter">
+            <option value="">全部状态</option>
+            <option value="签约">签约</option>
+            <option value="进行中">进行中</option>
+            <option value="意向">意向</option>
+            <option value="渠道">渠道</option>
+          </select></div>
+        </div>
+        <div id="geo-list" style="margin-top:10px"></div>
       </div>
+
+      <div class="card">
+        <h2>➕ 新增客户</h2>
+        <div class="row">
+          <div class="field" style="flex:2"><label>客户名</label><input id="geo-name" type="text" placeholder="公司 / 品牌名" /></div>
+          <div class="field"><label>状态</label><select id="geo-status">
+            <option>意向</option><option>进行中</option><option>签约</option><option>渠道</option></select></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div class="field"><label>联系人</label><input id="geo-contact" type="text" placeholder="对接人" /></div>
+          <div class="field"><label>行业</label><input id="geo-industry" type="text" placeholder="如 珠宝" /></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div class="field" style="flex:1"><label>下一步动作</label><input id="geo-next" type="text" placeholder="如 本周出方案" /></div>
+        </div>
+        <div class="btn-row"><button class="primary" id="add-client">添加客户</button></div>
+      </div>
+
+      <div class="card">
+        <h2>📌 GEO 动态</h2>
+        <div class="row">
+          <div class="field"><label>关联客户</label><input id="geo-note-client" type="text" placeholder="客户名 / 通用" /></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div class="field" style="flex:1"><label>动态</label><input id="geo-note-content" type="text" placeholder="进展 / 会议结论 / 待推进" /></div>
+        </div>
+        <div class="btn-row"><button class="primary" id="add-geo-note">记录</button></div>
+        <div id="geo-notes-list" style="margin-top:10px"></div>
+      </div>
+      <p class="meta" style="color:var(--muted);padding:4px 2px 0">里里在对话中更新的客户进展也会同步到这里——工作台点 🔄 拉取。</p>
     </section>
 
     <!-- 学习专区 -->
