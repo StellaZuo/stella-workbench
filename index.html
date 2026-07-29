@@ -31,22 +31,63 @@
         <span class="x" onclick="this.parentNode.style.display='none'">×</span>
       </div>
       <div class="card">
-        <h2>今日概览</h2>
-        <div class="kpis">
-          <div class="kpi pink"><div class="v" id="kpi-weight">—</div><div class="l">今日体重(斤)</div></div>
-          <div class="kpi blue"><div class="v" id="kpi-water">—</div><div class="l">饮水</div></div>
-          <div class="kpi green"><div class="v" id="kpi-fitness">0</div><div class="l">本月健身(次)</div></div>
-          <div class="kpi"><div class="v" id="kpi-todo">0</div><div class="l">待办未完成</div></div>
+        <h2>🚀 今日驾驶舱 <span id="today-date" style="font-size:12px;color:var(--muted);font-weight:400"></span></h2>
+        <div class="row">
+          <div class="field"><label>晨起体重 (斤)</label><input id="dash-weight" type="number" inputmode="decimal" placeholder="如 129" /></div>
+          <div class="field"><label>饮水量 (ml)</label><input id="dash-water" type="number" inputmode="numeric" placeholder="如 2000" /></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div class="field"><label>今日暴食</label>
+            <select id="dash-binge"><option value="no">未发生</option><option value="yes">有发生</option></select>
+          </div>
+          <div class="field" style="flex:2"><label>今日心情 / 备注</label><input id="dash-mood" type="text" placeholder="如 平稳 / 有点焦虑" /></div>
+        </div>
+        <p class="meta" style="margin:10px 0 0;color:var(--muted)">输入即自动保存 · 已接入云端，多端实时同步。</p>
+      </div>
+
+      <div class="card">
+        <h2>体重趋势</h2>
+        <canvas id="trend-canvas"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>今日待办</h2>
+        <div class="row">
+          <div class="field" style="flex:3"><input id="dash-todo-input" type="text" placeholder="添加待办，回车保存" /></div>
+          <div class="field" style="flex:0"><button class="primary" id="dash-add-todo">添加</button></div>
+        </div>
+        <div id="dash-todo-list" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <h2>今日饮食速记</h2>
+        <div class="row">
+          <div class="field"><label>时段</label>
+            <select id="dash-diet-meal"><option>早餐</option><option>午餐</option><option>晚餐</option><option>加餐</option><option>夜宵</option></select>
+          </div>
+          <div class="field" style="flex:2"><label>内容</label><input id="dash-diet-content" type="text" placeholder="吃了什么" /></div>
+        </div>
+        <div class="btn-row"><button class="primary" id="dash-add-diet">添加</button></div>
+        <div id="dash-diet-list" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <h2>本月数据</h2>
+        <div class="row">
+          <div class="field"><label>本月健身 (次)</label><div id="dash-fitness" style="font-size:22px;font-weight:700;color:var(--pink-strong)">0</div></div>
+          <div class="field"><label>待办未完成</label><div id="dash-todo-count" style="font-size:22px;font-weight:700;color:var(--pink-deep)">0</div></div>
         </div>
       </div>
+
       <div class="card">
         <h2>三大板块</h2>
         <div class="row">
-          <div class="chip">💼 GEO 创业业务</div>
-          <div class="chip">📚 学习成长</div>
-          <div class="chip">🌿 减脂健康</div>
+          <button class="chip" data-goto="geo">💼 GEO 创业业务</button>
+          <button class="chip" data-goto="study">📚 学习成长</button>
+          <button class="chip" data-goto="life">🌿 减脂健康</button>
+          <button class="chip" data-goto="review">📝 复盘</button>
         </div>
-        <p class="empty" style="text-align:left;padding:12px 0 0">数据自动保存到本地，并已接通云端，多设备实时同步。</p>
+        <p class="empty" style="text-align:left;padding:12px 0 0">点击进入各板块详细管理；GEO 业务与学习专区将于后续阶段接入。</p>
       </div>
     </section>
 
@@ -71,7 +112,7 @@
     <!-- 生活 · 减脂健康 -->
     <section id="sec-life" class="section">
       <div class="card">
-        <h2>🌿 今日健康打卡 <span id="today-date" style="font-size:12px;color:var(--muted);font-weight:400"></span></h2>
+        <h2>🌿 今日健康打卡</h2>
         <div class="row">
           <div class="field">
             <label>晨起体重 (斤)</label>
