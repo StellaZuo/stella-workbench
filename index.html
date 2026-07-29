@@ -19,13 +19,17 @@
       </div>
     </div>
     <div id="status-badge" class="status local">
-      <span class="dot"></span><span class="txt">本地模式</span>
+      <span class="dot"></span><span class="txt">连接中…</span>
     </div>
   </header>
 
   <main>
     <!-- 工作台总览 -->
     <section id="sec-overview" class="section active">
+      <div id="cloud-hint" class="banner" style="display:none">
+        <div>☁️ <b>云端未就绪</b>：请在 Supabase 后台 <code>SQL Editor</code> 运行仓库内的 <code>supabase-schema.sql</code>，运行后刷新本页即可多端同步。</div>
+        <span class="x" onclick="this.parentNode.style.display='none'">×</span>
+      </div>
       <div class="card">
         <h2>今日概览</h2>
         <div class="kpis">
@@ -42,7 +46,7 @@
           <div class="chip">📚 学习成长</div>
           <div class="chip">🌿 减脂健康</div>
         </div>
-        <p class="empty" style="text-align:left;padding:12px 0 0">数据本地自动保存，接通云端后多设备同步。</p>
+        <p class="empty" style="text-align:left;padding:12px 0 0">数据自动保存到本地，并已接通云端，多设备实时同步。</p>
       </div>
     </section>
 
