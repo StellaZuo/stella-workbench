@@ -382,6 +382,68 @@
     });
   }
 
+  // ---- 复盘（可编辑，里里侧也可写入） ----
+  const reviews = ensure(data, 'reviews', []);
+  document.getElementById('add-review').addEventListener('click', () => {
+    const content = document.getElementById('review-content').value.trim();
+    if (!content) return flash('写点内容吧');
+    reviews.unshift({ id: Date.now(), date: TODAY, type: document.getElementById('review-type').value, content, source: 'app' });
+    document.getElementById('review-content').value = '';
+    save(); renderReviews();
+  });
+  function renderReviews() {
+    const box = document.getElementById('review-list');
+    if (!box) return;
+    if (!reviews.length) { box.innerHTML = '<div class="empty">还没有复盘记录</div>'; return; }
+    box.innerHTML = reviews.map(r =>
+      `<div class="item"><div class="body"><div><span class="tag">${r.type || '复盘'}</span>${escapeHtml(r.content)}</div>` +
+      `<div class="meta">${prettyDate(r.date)}${r.source === '里里' ? ' · 来自里里' : ''}</div></div>` +
+      `<button class="del" data-id="${r.id}">×</button></div>`
+    ).join('');
+    box.querySelectorAll('.del').forEach(d => d.onclick = () => {
+      const i = reviews.findIndex(x => x.id == d.dataset.id); reviews.splice(i, 1); save(); renderReviews();
+    });
+  }
+
+  // ---- 来自里里（对话中帮你记的数据收件箱） ----
+  const inbox = ensure(data, '_inbox', []);
+  function renderInbox() {
+    const box = document.getElementById('inbox-list');
+    if (!box) return;
+    if (!inbox.length) { box.innerHTML = '<div class="empty">里里同步的记录会显示在这里</div>'; return; }
+    box.innerHTML = inbox.slice(0, 8).map(r =>
+      `<div class="item"><div class="body"><div><span class="tag">${r.board || '通用'}</span>${escapeHtml(r.content)}</div>` +
+      `<div class="meta">${prettyDate(r.date)}</div></div>` +
+      `<button class="del" data-id="${r.id}">×</button></div>`
+    ).join('');
+    box.querySelectorAll('.del').forEach(d => d.onclick = () => {
+      const i = inbox.findIndex(x => x.id == d.dataset.id); inbox.splice(i, 1); save(); renderInbox();
+    });
+  }
+
+  // ---- 手动拉取云端（里里写入的最新数据） ----
+  document.getElementById('sync-btn').addEventListener('click', pullUpdates);
+  async function pullUpdates() {
+    if (!navigator.onLine) { setStatus('offline'); return; }
+    try {
+      const row = await sbGetRow();
+      if (!row) return flash('云端暂无数据');
+      const meta = loadMeta();
+      const syncedAt = meta.syncedAt ? Date.parse(meta.syncedAt) : 0;
+      const localMod = meta.localModified ? Date.parse(meta.localModified) : 0;
+      const remoteTs = row.updated_at ? Date.parse(row.updated_at) : 0;
+      if (remoteTs > syncedAt && remoteTs >= localMod) {
+        localStorage.setItem(DB_KEY, JSON.stringify(row.payload || {}));
+        saveMeta({ syncedAt: row.updated_at, localModified: row.updated_at, device: row.device });
+        setStatus('online');
+        flash('已拉取里里的最新记录，刷新中…');
+        setTimeout(() => location.reload(), 700);
+      } else {
+        flash('已是最新');
+      }
+    } catch (e) { console.warn('pull 失败', e); flash('同步失败，稍后再试'); }
+  }
+
   // ---- 体重趋势 ----
   function renderTrend() {
     const cv = document.getElementById('trend-canvas');
@@ -427,7 +489,7 @@
   // ---- 初始化 ----
   document.getElementById('today-date').textContent = '· ' + prettyDate(TODAY);
   setStatus('local');
-  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); refreshKPI(); renderTrend();
+  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); refreshKPI(); renderTrend();
 
   // 驾驶舱：今日待办 / 饮食快捷编辑
   document.getElementById('dash-add-todo').addEventListener('click', addTodoFromDash);
@@ -460,6 +522,6 @@
   window.__STELLA__ = {
     data, save, initCloud, doPush,
     setStatus,
-    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); refreshKPI(); renderTrend(); }
+    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); refreshKPI(); renderTrend(); }
   };
 })();
