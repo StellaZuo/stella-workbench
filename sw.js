@@ -1,4 +1,5 @@
-const CACHE = 'stella-v1';
+const CACHE = 'stella-v2';
+const SHELL_SUFFIX = ['/', '/index.html', '/app.js', '/styles.css', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 const ASSETS = [
   './',
   './index.html',
@@ -33,7 +34,20 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return;
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('./index.html')))
-  );
+  const isShell = SHELL_SUFFIX.some(s => url.pathname.endsWith(s));
+  if (isShell) {
+    // 外壳资源：网络优先，保证改 CSS/JS 后下次打开即生效（离线时回退缓存）
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
+    );
+    return;
+  }
+  // 其余资源：缓存优先
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('./index.html'))));
 });
