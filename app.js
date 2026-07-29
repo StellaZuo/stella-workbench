@@ -1,8 +1,15 @@
-/* Stella Zuo 工作台 · 阶段一（本地存储版，待接 Supabase） */
+/* Stella Zuo 工作台 · 阶段二（Supabase 云端同步 + 本地存储） */
 (function () {
   'use strict';
 
+  // ===== Supabase 配置（anon key 本就公开，安全性由 RLS 策略界定） =====
+  const SUPABASE_URL = 'https://zxogdpguhlztcqcbancz.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4b2dkcGd1aGx6dGNxY2JhbmN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyMzQ4MTIsImV4cCI6MjEwMDgxMDgxMn0.FcUTqk85DxMcB82_ru7zqrV9KR8WuWGxA-FJDUNxpEg';
+  const STATE_ID = 'stella-main';
+  const TABLE = 'app_state';
+
   const DB_KEY = 'stella-data-v1';
+  const META_KEY = 'stella-meta-v1';
   const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 
   function ymd(d) {
@@ -23,20 +30,136 @@
     try { return JSON.parse(localStorage.getItem(DB_KEY)) || {}; }
     catch (e) { return {}; }
   }
-  function save() { localStorage.setItem(DB_KEY, JSON.stringify(data)); }
+  function save() {
+    localStorage.setItem(DB_KEY, JSON.stringify(data));
+    markLocalModified();
+    schedulePush();
+  }
 
   const ensure = (o, k, v) => (k in o ? o[k] : (o[k] = v));
 
-  // ---- 状态标识（在线/离线/本地） ----
+  // ---- 同步元数据 ----
+  function loadMeta() { try { return JSON.parse(localStorage.getItem(META_KEY)) || {}; } catch (e) { return {}; } }
+  function saveMeta(m) { localStorage.setItem(META_KEY, JSON.stringify(m)); }
+  function markLocalModified() {
+    const m = loadMeta();
+    m.localModified = new Date().toISOString();
+    saveMeta(m);
+  }
+
+  // 安装级设备 ID（仅用于排查，不影响逻辑）
+  let DEVICE_ID = localStorage.getItem('stella-device');
+  if (!DEVICE_ID) { DEVICE_ID = 'd-' + Math.random().toString(36).slice(2, 10); localStorage.setItem('stella-device', DEVICE_ID); }
+
+  // ---- 状态标识 ----
   const badge = document.getElementById('status-badge');
   function setStatus(mode) {
-    badge.className = 'status ' + mode;
+    badge.className = 'status ' + (mode === 'config' ? 'local' : mode);
     badge.querySelector('.txt').textContent =
-      mode === 'online' ? '已同步' : mode === 'offline' ? '离线' : '本地模式';
+      mode === 'online' ? '云端已同步' :
+      mode === 'offline' ? '离线' :
+      mode === 'config' ? '云端未配置' : '待同步';
   }
-  function refreshNet() { setStatus(navigator.onLine ? 'local' : 'offline'); }
-  window.addEventListener('online', refreshNet);
-  window.addEventListener('offline', refreshNet);
+
+  // ===== Supabase REST 客户端（无 SDK 依赖） =====
+  function sbHeaders(extra) {
+    return Object.assign({
+      'apikey': SUPABASE_ANON,
+      'Authorization': 'Bearer ' + SUPABASE_ANON,
+      'Content-Type': 'application/json'
+    }, extra || {});
+  }
+  async function sbGetRow() {
+    const url = `${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${encodeURIComponent(STATE_ID)}&select=*`;
+    const r = await fetch(url, { headers: sbHeaders() });
+    if (r.status === 404) throw new Error('TABLE_MISSING');
+    if (!r.ok) throw new Error('GET ' + r.status);
+    const arr = await r.json();
+    return arr[0] || null;
+  }
+  async function sbUpsertRow(payload, ts) {
+    const url = `${SUPABASE_URL}/rest/v1/${TABLE}`;
+    const body = { id: STATE_ID, payload: payload, updated_at: ts, device: DEVICE_ID };
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: sbHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+      body: JSON.stringify(body)
+    });
+    if (r.status === 404) throw new Error('TABLE_MISSING');
+    if (!r.ok) throw new Error('UPSERT ' + r.status + ' ' + (await r.text()).slice(0, 200));
+  }
+
+  // ---- 推送（防抖） ----
+  let pushTimer = null;
+  let cloudEnabled = true;
+  let cloudHintShown = false;
+  function schedulePush() {
+    if (!navigator.onLine) { setStatus('offline'); return; }
+    if (!cloudEnabled) { setStatus('config'); return; }
+    setStatus('local');
+    if (pushTimer) clearTimeout(pushTimer);
+    pushTimer = setTimeout(doPush, 1200);
+  }
+  async function doPush() {
+    if (!navigator.onLine) { setStatus('offline'); return; }
+    const ts = new Date().toISOString();
+    try {
+      await sbUpsertRow(data, ts);
+      const m = loadMeta();
+      m.syncedAt = ts;
+      m.localModified = ts;
+      saveMeta(m);
+      setStatus('online');
+    } catch (e) {
+      if (e.message === 'TABLE_MISSING') { cloudEnabled = false; showCloudHint(); setStatus('config'); }
+      else setStatus(navigator.onLine ? 'local' : 'offline');
+    }
+  }
+
+  // ---- 拉取 / 合并（仅首屏；重连时只上传本地） ----
+  let firstInit = true;
+  async function initCloud() {
+    if (!navigator.onLine) { setStatus('offline'); return; }
+    if (firstInit) {
+      firstInit = false;
+      await pullThenMaybePush();
+    } else {
+      await doPush(); // 重连：把离线期间的本地编辑上传
+    }
+  }
+  async function pullThenMaybePush() {
+    try {
+      const row = await sbGetRow();
+      const meta = loadMeta();
+      const syncedAt = meta.syncedAt ? Date.parse(meta.syncedAt) : 0;
+      const localMod = meta.localModified ? Date.parse(meta.localModified) : 0;
+      if (row) {
+        const remoteTs = row.updated_at ? Date.parse(row.updated_at) : 0;
+        if (remoteTs > syncedAt && localMod <= syncedAt) {
+          // 远端更新且本地无未同步改动 → 采用远端
+          localStorage.setItem(DB_KEY, JSON.stringify(row.payload || {}));
+          saveMeta({ syncedAt: row.updated_at, localModified: row.updated_at, device: row.device });
+          setStatus('online');
+          location.reload();
+          return;
+        }
+        // 否则以本地为准，上传覆盖
+        await doPush();
+      } else {
+        await doPush(); // 远端无记录 → 上传本地
+      }
+    } catch (e) {
+      if (e.message === 'TABLE_MISSING') { cloudEnabled = false; showCloudHint(); setStatus('config'); }
+      else setStatus(navigator.onLine ? 'local' : 'offline');
+    }
+  }
+  function showCloudHint() {
+    const el = document.getElementById('cloud-hint');
+    if (el && !cloudHintShown) { cloudHintShown = true; el.style.display = 'flex'; }
+  }
+
+  window.addEventListener('offline', () => setStatus('offline'));
+  window.addEventListener('online', () => { initCloud(); });
 
   // ---- 导航 ----
   const tabs = document.querySelectorAll('nav.tabbar button');
@@ -221,7 +344,7 @@
   // ---- KPI ----
   function refreshKPI() {
     document.getElementById('kpi-weight').textContent = todayCheckin.weight || '—';
-    document.getElementById('kpi-water').textContent = todayCheckin.water ? todayCheckin.water + 'ml' : '—';
+    document.getElementById('kpi-water').textContent = todayCheckin.water ? todayCheckin.water + 'ml' : '';
     let fc = 0; Object.keys(fitness).forEach(k => { if (k.startsWith(monthKey())) fc += fitness[k].length; });
     document.getElementById('kpi-fitness').textContent = fc;
     document.getElementById('kpi-todo').textContent = todos.filter(t => !t.done).length;
@@ -238,7 +361,9 @@
 
   // ---- 初始化 ----
   document.getElementById('today-date').textContent = '· ' + prettyDate(TODAY);
-  refreshNet(); fillCheckin(); renderDiets(); renderFitness(); renderTodos(); refreshKPI(); renderTrend();
+  setStatus('local');
+  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); refreshKPI(); renderTrend();
+  initCloud();
 
   // ---- Service Worker ----
   if ('serviceWorker' in navigator) {
@@ -247,6 +372,10 @@
     });
   }
 
-  // 暴露给阶段二接入 Supabase 的钩子
-  window.__STELLA__ = { data, save, refreshNet, setStatus, renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); refreshKPI(); renderTrend(); } };
+  // 暴露给后续阶段（GEO/学习/AI 研讨）接入的钩子
+  window.__STELLA__ = {
+    data, save, initCloud, doPush,
+    setStatus,
+    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); refreshKPI(); renderTrend(); }
+  };
 })();
