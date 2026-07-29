@@ -21,6 +21,7 @@
     <div id="status-badge" class="status local">
       <span class="dot"></span><span class="txt">连接中…</span>
     </div>
+    <button id="sync-btn" class="sync-btn" title="同步里里在对话里帮你记的最新数据">🔄</button>
   </header>
 
   <main>
@@ -80,14 +81,19 @@
       </div>
 
       <div class="card">
-        <h2>三大板块</h2>
+        <h2>📥 来自里里</h2>
+        <div id="inbox-list"></div>
+      </div>
+
+      <div class="card">
+        <h2>四大板块</h2>
         <div class="row">
           <button class="chip" data-goto="geo">💼 GEO 创业业务</button>
           <button class="chip" data-goto="study">📚 学习成长</button>
           <button class="chip" data-goto="life">🌿 减脂健康</button>
           <button class="chip" data-goto="review">📝 复盘</button>
         </div>
-        <p class="empty" style="text-align:left;padding:12px 0 0">点击进入各板块详细管理；GEO 业务与学习专区将于后续阶段接入。</p>
+        <p class="empty" style="text-align:left;padding:12px 0 0">点击进入各板块详细管理；GEO 业务与学习专区将于后续阶段接入。里里在对话中帮你记的数据会出现在上方「来自里里」。</p>
       </div>
     </section>
 
@@ -195,10 +201,27 @@
 
     <!-- 复盘 -->
     <section id="sec-review" class="section">
-      <div class="placeholder">
-        <div class="big">📝</div>
-        <p>日 / 周 / 月 复盘模块<br/>阶段后续接入。</p>
+      <div class="card">
+        <h2>📝 记录复盘</h2>
+        <div class="row">
+          <div class="field"><label>类型</label>
+            <select id="review-type">
+              <option value="日">日复盘</option>
+              <option value="周">周复盘</option>
+              <option value="月">月复盘</option>
+              <option value="专项">专项复盘</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div class="field" style="flex:1"><label>内容</label>
+            <textarea id="review-content" rows="3" placeholder="今天的收获、卡点、下一步…"></textarea>
+          </div>
+        </div>
+        <div class="btn-row"><button class="primary" id="add-review">保存复盘</button></div>
+        <div id="review-list" style="margin-top:10px"></div>
       </div>
+      <p class="meta" style="color:var(--muted);padding:4px 2px 0">里里在对话中帮你记的复盘，也会同步到这里——在「工作台」点 🔄 即可拉取。</p>
     </section>
   </main>
 
