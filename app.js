@@ -173,20 +173,51 @@
   // ---- 减脂：今日打卡 ----
   const weightInput = document.getElementById('weight-input');
   const waterInput = document.getElementById('water-input');
-  const todayCheckin = ensure(data, 'weights', {})[TODAY] || (data.weights[TODAY] = { weight: '', water: '', binge: [] });
+  const dashWeight = document.getElementById('dash-weight');
+  const dashWater = document.getElementById('dash-water');
+  const dashBinge = document.getElementById('dash-binge');
+  const dashMood = document.getElementById('dash-mood');
+  const todayCheckin = ensure(data, 'weights', {})[TODAY] || (data.weights[TODAY] = { weight: '', water: '', binge: [], mood: '' });
 
-  function fillCheckin() {
-    weightInput.value = todayCheckin.weight || '';
-    waterInput.value = todayCheckin.water || '';
+  // 把今日打卡回填到所有输入控件（生活 tab + 驾驶舱），保持双向同步
+  function renderCheckinUI() {
+    const w = todayCheckin.weight || '';
+    const wa = todayCheckin.water || '';
+    const mo = todayCheckin.mood || '';
+    const bi = (todayCheckin.binge && todayCheckin.binge.length) ? 'yes' : 'no';
+    if (weightInput) weightInput.value = w;
+    if (waterInput) waterInput.value = wa;
+    if (dashWeight) dashWeight.value = w;
+    if (dashWater) dashWater.value = wa;
+    if (dashMood) dashMood.value = mo;
+    if (dashBinge) dashBinge.value = bi;
     renderBinges();
   }
-  weightInput.addEventListener('change', () => { todayCheckin.weight = weightInput.value; save(); refreshKPI(); renderTrend(); });
-  waterInput.addEventListener('change', () => { todayCheckin.water = waterInput.value; save(); refreshKPI(); });
+  function setCheckinField(field, val) {
+    if (field === 'weight') todayCheckin.weight = val;
+    else if (field === 'water') todayCheckin.water = val;
+    else if (field === 'mood') todayCheckin.mood = val;
+    else if (field === 'binge') {
+      if (val === 'yes' && !(todayCheckin.binge && todayCheckin.binge.length)) {
+        (todayCheckin.binge = todayCheckin.binge || []).push({ time: '', food: '暴食(驾驶舱标记)', mood: '', cause: '' });
+      } else if (val === 'no') {
+        todayCheckin.binge = [];
+      }
+    }
+    save(); renderCheckinUI(); refreshKPI(); renderTrend();
+  }
+  if (weightInput) weightInput.addEventListener('change', () => setCheckinField('weight', weightInput.value));
+  if (waterInput) waterInput.addEventListener('change', () => setCheckinField('water', waterInput.value));
+  if (dashWeight) dashWeight.addEventListener('change', () => setCheckinField('weight', dashWeight.value));
+  if (dashWater) dashWater.addEventListener('change', () => setCheckinField('water', dashWater.value));
+  if (dashMood) dashMood.addEventListener('change', () => setCheckinField('mood', dashMood.value));
+  if (dashBinge) dashBinge.addEventListener('change', () => setCheckinField('binge', dashBinge.value));
+  function fillCheckin() { renderCheckinUI(); }
 
   document.getElementById('save-checkin').addEventListener('click', () => {
     todayCheckin.weight = weightInput.value;
     todayCheckin.water = waterInput.value;
-    save(); refreshKPI(); renderTrend();
+    save(); renderCheckinUI(); refreshKPI(); renderTrend();
     flash('已保存今日打卡');
   });
 
@@ -232,18 +263,31 @@
     if (!c) return;
     diets[TODAY].push({ meal: document.getElementById('diet-meal').value, content: c });
     document.getElementById('diet-content').value = '';
-    save(); renderDiets();
+    save(); renderDiets(); renderDashDiets();
   });
   function renderDiets() {
     const box = document.getElementById('diet-list');
     const arr = diets[TODAY];
     if (!arr.length) { box.innerHTML = '<div class="empty">今天还没有饮食记录</div>'; return; }
     box.innerHTML = arr.map((d, i) =>
-      `<div class="item"><div class="body"><div><b>${d.meal}</b> ${d.content}</div></div>` +
+      `<div class="item"><div class="body"><div><b>${d.meal}</b> ${escapeHtml(d.content)}</div></div>` +
       `<button class="del" data-i="${i}">×</button></div>`
     ).join('');
     box.querySelectorAll('.del').forEach(x => x.onclick = () => {
-      arr.splice(+x.dataset.i, 1); save(); renderDiets();
+      arr.splice(+x.dataset.i, 1); save(); renderDiets(); renderDashDiets();
+    });
+  }
+  function renderDashDiets() {
+    const box = document.getElementById('dash-diet-list');
+    if (!box) return;
+    const arr = diets[TODAY];
+    if (!arr.length) { box.innerHTML = '<div class="empty">今天还没吃</div>'; return; }
+    box.innerHTML = arr.map((d, i) =>
+      `<div class="item"><div class="body"><div><b>${d.meal}</b> ${escapeHtml(d.content)}</div></div>` +
+      `<button class="del" data-i="${i}">×</button></div>`
+    ).join('');
+    box.querySelectorAll('.del').forEach(x => x.onclick = () => {
+      arr.splice(+x.dataset.i, 1); save(); renderDiets(); renderDashDiets();
     });
   }
 
@@ -288,7 +332,30 @@
     if (!t) return;
     todos.unshift({ id: Date.now(), text: t, done: false, date: TODAY });
     document.getElementById('todo-input').value = '';
-    save(); renderTodos(); refreshKPI();
+    save(); renderTodos(); renderDashTodos(); refreshKPI();
+  }
+  function addTodoFromDash() {
+    const t = document.getElementById('dash-todo-input').value.trim();
+    if (!t) return;
+    todos.unshift({ id: Date.now(), text: t, done: false, date: TODAY });
+    document.getElementById('dash-todo-input').value = '';
+    save(); renderTodos(); renderDashTodos(); refreshKPI();
+  }
+  function renderDashTodos() {
+    const box = document.getElementById('dash-todo-list');
+    if (!box) return;
+    const arr = todos.filter(t => t.date === TODAY);
+    if (!arr.length) { box.innerHTML = '<div class="empty">今天还没有待办</div>'; return; }
+    box.innerHTML = arr.map(t =>
+      `<div class="item ${t.done ? 'done' : ''}"><div class="check ${t.done ? 'done' : ''}" data-id="${t.id}">${t.done ? '✓' : ''}</div>` +
+      `<div class="body">${escapeHtml(t.text)}</div><button class="del" data-id="${t.id}">×</button></div>`
+    ).join('');
+    box.querySelectorAll('.check').forEach(c => c.onclick = () => {
+      const t = todos.find(x => x.id == c.dataset.id); t.done = !t.done; save(); renderTodos(); renderDashTodos(); refreshKPI();
+    });
+    box.querySelectorAll('.del').forEach(d => d.onclick = () => {
+      const i = todos.findIndex(x => x.id == d.dataset.id); todos.splice(i, 1); save(); renderTodos(); renderDashTodos(); refreshKPI();
+    });
   }
   function renderTodos() {
     const box = document.getElementById('todo-groups');
@@ -308,10 +375,10 @@
       const b = h.nextElementSibling; b.classList.toggle('collapsed');
     });
     box.querySelectorAll('.check').forEach(c => c.onclick = () => {
-      const t = todos.find(x => x.id == c.dataset.id); t.done = !t.done; save(); renderTodos(); refreshKPI();
+      const t = todos.find(x => x.id == c.dataset.id); t.done = !t.done; save(); renderTodos(); renderDashTodos(); refreshKPI();
     });
     box.querySelectorAll('.del').forEach(d => d.onclick = () => {
-      const i = todos.findIndex(x => x.id == d.dataset.id); todos.splice(i, 1); save(); renderTodos(); refreshKPI();
+      const i = todos.findIndex(x => x.id == d.dataset.id); todos.splice(i, 1); save(); renderTodos(); renderDashTodos(); refreshKPI();
     });
   }
 
@@ -332,22 +399,20 @@
     const min = Math.min(...vals) - 1, max = Math.max(...vals) + 1;
     const px = i => entries.length === 1 ? w / 2 : 30 + i * (w - 60) / (entries.length - 1);
     const py = v => h - 20 - (v - min) / (max - min) * (h - 40);
-    ctx.strokeStyle = '#ffb6c1'; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.strokeStyle = '#ff5c8a'; ctx.lineWidth = 2; ctx.beginPath();
     entries.forEach((e, i) => { const x = px(i), y = py(e.v); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
     ctx.stroke();
-    ctx.fillStyle = '#ffb6c1';
+    ctx.fillStyle = '#ff5c8a';
     entries.forEach((e, i) => { ctx.beginPath(); ctx.arc(px(i), py(e.v), 3.5, 0, 7); ctx.fill(); });
     ctx.fillStyle = '#9a9aab'; ctx.font = '10px sans-serif';
     entries.forEach((e, i) => { if (i % Math.ceil(entries.length / 6) === 0) ctx.fillText(e.k.slice(5), px(i) - 12, h - 6); });
   }
 
-  // ---- KPI ----
+  // ---- 本月统计（驾驶舱） ----
   function refreshKPI() {
-    document.getElementById('kpi-weight').textContent = todayCheckin.weight || '—';
-    document.getElementById('kpi-water').textContent = todayCheckin.water ? todayCheckin.water + 'ml' : '';
     let fc = 0; Object.keys(fitness).forEach(k => { if (k.startsWith(monthKey())) fc += fitness[k].length; });
-    document.getElementById('kpi-fitness').textContent = fc;
-    document.getElementById('kpi-todo').textContent = todos.filter(t => !t.done).length;
+    const df = document.getElementById('dash-fitness'); if (df) df.textContent = fc;
+    const dt = document.getElementById('dash-todo-count'); if (dt) dt.textContent = todos.filter(t => !t.done).length;
   }
 
   function escapeHtml(s) { return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
@@ -362,7 +427,26 @@
   // ---- 初始化 ----
   document.getElementById('today-date').textContent = '· ' + prettyDate(TODAY);
   setStatus('local');
-  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); refreshKPI(); renderTrend();
+  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); refreshKPI(); renderTrend();
+
+  // 驾驶舱：今日待办 / 饮食快捷编辑
+  document.getElementById('dash-add-todo').addEventListener('click', addTodoFromDash);
+  document.getElementById('dash-todo-input').addEventListener('keydown', e => { if (e.key === 'Enter') addTodoFromDash(); });
+  document.getElementById('dash-add-diet').addEventListener('click', () => {
+    const c = document.getElementById('dash-diet-content').value.trim();
+    if (!c) return;
+    diets[TODAY].push({ meal: document.getElementById('dash-diet-meal').value, content: c });
+    document.getElementById('dash-diet-content').value = '';
+    save(); renderDiets(); renderDashDiets();
+  });
+  // 三大板块导航跳转
+  document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => {
+    const sec = b.dataset.goto;
+    document.querySelectorAll('nav.tabbar button').forEach(x => x.classList.remove('active'));
+    const tb = document.querySelector('nav.tabbar button[data-sec="' + sec + '"]');
+    if (tb) tb.click();
+  }));
+
   initCloud();
 
   // ---- Service Worker ----
@@ -376,6 +460,6 @@
   window.__STELLA__ = {
     data, save, initCloud, doPush,
     setStatus,
-    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); refreshKPI(); renderTrend(); }
+    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); refreshKPI(); renderTrend(); }
   };
 })();
