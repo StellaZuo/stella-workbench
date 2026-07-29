@@ -1,0 +1,252 @@
+/* Stella Zuo 工作台 · 阶段一（本地存储版，待接 Supabase） */
+(function () {
+  'use strict';
+
+  const DB_KEY = 'stella-data-v1';
+  const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+
+  function ymd(d) {
+    d = d || new Date();
+    const z = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+  }
+  const TODAY = ymd();
+
+  function prettyDate(s) {
+    const [y, m, d] = s.split('-').map(Number);
+    return `${m}月${d}日 周${WEEK[new Date(y, m - 1, d).getDay()]}`;
+  }
+
+  // ---- 存储 ----
+  let data = load();
+  function load() {
+    try { return JSON.parse(localStorage.getItem(DB_KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function save() { localStorage.setItem(DB_KEY, JSON.stringify(data)); }
+
+  const ensure = (o, k, v) => (k in o ? o[k] : (o[k] = v));
+
+  // ---- 状态标识（在线/离线/本地） ----
+  const badge = document.getElementById('status-badge');
+  function setStatus(mode) {
+    badge.className = 'status ' + mode;
+    badge.querySelector('.txt').textContent =
+      mode === 'online' ? '已同步' : mode === 'offline' ? '离线' : '本地模式';
+  }
+  function refreshNet() { setStatus(navigator.onLine ? 'local' : 'offline'); }
+  window.addEventListener('online', refreshNet);
+  window.addEventListener('offline', refreshNet);
+
+  // ---- 导航 ----
+  const tabs = document.querySelectorAll('nav.tabbar button');
+  tabs.forEach(b => b.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('main .section').forEach(s => s.classList.remove('active'));
+    document.getElementById('sec-' + b.dataset.sec).classList.add('active');
+  }));
+
+  // ---- 减脂：今日打卡 ----
+  const weightInput = document.getElementById('weight-input');
+  const waterInput = document.getElementById('water-input');
+  const todayCheckin = ensure(data, 'weights', {})[TODAY] || (data.weights[TODAY] = { weight: '', water: '', binge: [] });
+
+  function fillCheckin() {
+    weightInput.value = todayCheckin.weight || '';
+    waterInput.value = todayCheckin.water || '';
+    renderBinges();
+  }
+  weightInput.addEventListener('change', () => { todayCheckin.weight = weightInput.value; save(); refreshKPI(); renderTrend(); });
+  waterInput.addEventListener('change', () => { todayCheckin.water = waterInput.value; save(); refreshKPI(); });
+
+  document.getElementById('save-checkin').addEventListener('click', () => {
+    todayCheckin.weight = weightInput.value;
+    todayCheckin.water = waterInput.value;
+    save(); refreshKPI(); renderTrend();
+    flash('已保存今日打卡');
+  });
+
+  // 暴食
+  const bingeForm = document.getElementById('binge-form');
+  document.getElementById('binge-toggle').addEventListener('click', () => {
+    bingeForm.style.display = bingeForm.style.display === 'none' ? 'block' : 'none';
+  });
+  document.getElementById('add-binge').addEventListener('click', () => {
+    const b = {
+      time: document.getElementById('binge-time').value.trim(),
+      food: document.getElementById('binge-food').value.trim(),
+      mood: document.getElementById('binge-mood').value.trim(),
+      cause: document.getElementById('binge-cause').value.trim()
+    };
+    if (!b.food && !b.time) return flash('至少填时间或食物');
+    (todayCheckin.binge = todayCheckin.binge || []).push(b);
+    save(); renderBinges();
+    document.getElementById('binge-time').value = '';
+    document.getElementById('binge-food').value = '';
+    document.getElementById('binge-mood').value = '';
+    document.getElementById('binge-cause').value = '';
+  });
+  function renderBinges() {
+    const box = document.getElementById('binge-list');
+    const arr = todayCheckin.binge || [];
+    if (!arr.length) { box.innerHTML = ''; return; }
+    box.innerHTML = arr.map((b, i) =>
+      `<div class="item"><div class="body"><div>${b.food || '暴食'} ${b.time ? '· ' + b.time : ''}</div>` +
+      `<div class="meta">情绪:${b.mood || '—'} 诱因:${b.cause || '—'}</div></div>` +
+      `<button class="del" data-i="${i}">×</button></div>`
+    ).join('');
+    box.querySelectorAll('.del').forEach(d => d.onclick = () => {
+      arr.splice(+d.dataset.i, 1); save(); renderBinges();
+    });
+  }
+
+  // ---- 饮食 ----
+  const diets = ensure(data, 'diets', {});
+  diets[TODAY] = diets[TODAY] || [];
+  document.getElementById('add-diet').addEventListener('click', () => {
+    const c = document.getElementById('diet-content').value.trim();
+    if (!c) return;
+    diets[TODAY].push({ meal: document.getElementById('diet-meal').value, content: c });
+    document.getElementById('diet-content').value = '';
+    save(); renderDiets();
+  });
+  function renderDiets() {
+    const box = document.getElementById('diet-list');
+    const arr = diets[TODAY];
+    if (!arr.length) { box.innerHTML = '<div class="empty">今天还没有饮食记录</div>'; return; }
+    box.innerHTML = arr.map((d, i) =>
+      `<div class="item"><div class="body"><div><b>${d.meal}</b> ${d.content}</div></div>` +
+      `<button class="del" data-i="${i}">×</button></div>`
+    ).join('');
+    box.querySelectorAll('.del').forEach(x => x.onclick = () => {
+      arr.splice(+x.dataset.i, 1); save(); renderDiets();
+    });
+  }
+
+  // ---- 健身 ----
+  const fitness = ensure(data, 'fitness', {});
+  fitness[TODAY] = fitness[TODAY] || [];
+  document.getElementById('add-fitness').addEventListener('click', () => {
+    const p = document.getElementById('fitness-project').value;
+    const m = parseInt(document.getElementById('fitness-min').value, 10);
+    if (!m || m <= 0) return flash('填训练时长');
+    fitness[TODAY].push({ project: p, min: m });
+    document.getElementById('fitness-min').value = '';
+    save(); renderFitness();
+  });
+  function monthKey() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1); }
+  function renderFitness() {
+    const arr = fitness[TODAY];
+    const box = document.getElementById('fitness-list');
+    const stat = document.getElementById('fitness-stat');
+    // 本月统计
+    let cnt = 0, mins = 0;
+    Object.keys(fitness).forEach(k => {
+      if (k.startsWith(monthKey())) fitness[k].forEach(f => { cnt++; mins += f.min; });
+    });
+    stat.textContent = `本月累计：${cnt} 次 · ${mins} 分钟`;
+    if (!arr.length) { box.innerHTML = '<div class="empty">今天还没打卡</div>'; return; }
+    box.innerHTML = arr.map((f, i) =>
+      `<div class="item"><div class="body"><div>${f.project}</div><div class="meta">${f.min} 分钟</div></div>` +
+      `<button class="del" data-i="${i}">×</button></div>`
+    ).join('');
+    box.querySelectorAll('.del').forEach(x => x.onclick = () => {
+      arr.splice(+x.dataset.i, 1); save(); renderFitness();
+    });
+  }
+
+  // ---- 待办（按日期折叠） ----
+  const todos = ensure(data, 'todos', []);
+  document.getElementById('add-todo').addEventListener('click', addTodo);
+  document.getElementById('todo-input').addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
+  function addTodo() {
+    const t = document.getElementById('todo-input').value.trim();
+    if (!t) return;
+    todos.unshift({ id: Date.now(), text: t, done: false, date: TODAY });
+    document.getElementById('todo-input').value = '';
+    save(); renderTodos(); refreshKPI();
+  }
+  function renderTodos() {
+    const box = document.getElementById('todo-groups');
+    if (!todos.length) { box.innerHTML = '<div class="empty">暂无待办</div>'; return; }
+    const groups = {};
+    todos.forEach(t => { (groups[t.date] = groups[t.date] || []).push(t); });
+    const keys = Object.keys(groups).sort().reverse();
+    box.innerHTML = keys.map(k => {
+      const items = groups[k].map(t =>
+        `<div class="item ${t.done ? 'done' : ''}"><div class="check ${t.done ? 'done' : ''}" data-id="${t.id}">${t.done ? '✓' : ''}</div>` +
+        `<div class="body">${escapeHtml(t.text)}</div><button class="del" data-id="${t.id}">×</button></div>`
+      ).join('');
+      return `<div class="day-group"><div class="day-head" data-k="${k}"><span>${prettyDate(k)}</span>` +
+        `<span class="count">${groups[k].length} 项</span></div><div class="day-body">${items}</div></div>`;
+    }).join('');
+    box.querySelectorAll('.day-head').forEach(h => h.onclick = () => {
+      const b = h.nextElementSibling; b.classList.toggle('collapsed');
+    });
+    box.querySelectorAll('.check').forEach(c => c.onclick = () => {
+      const t = todos.find(x => x.id == c.dataset.id); t.done = !t.done; save(); renderTodos(); refreshKPI();
+    });
+    box.querySelectorAll('.del').forEach(d => d.onclick = () => {
+      const i = todos.findIndex(x => x.id == d.dataset.id); todos.splice(i, 1); save(); renderTodos(); refreshKPI();
+    });
+  }
+
+  // ---- 体重趋势 ----
+  function renderTrend() {
+    const cv = document.getElementById('trend-canvas');
+    const dpr = window.devicePixelRatio || 1;
+    const w = cv.clientWidth, h = 160;
+    cv.width = w * dpr; cv.height = h * dpr;
+    const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+    const entries = Object.keys(data.weights || {})
+      .filter(k => data.weights[k].weight)
+      .sort()
+      .map(k => ({ k, v: parseFloat(data.weights[k].weight) }));
+    if (entries.length < 1) { ctx.fillStyle = '#9a9aab'; ctx.font = '13px sans-serif'; ctx.fillText('录入体重后显示趋势', 12, h / 2); return; }
+    const vals = entries.map(e => e.v);
+    const min = Math.min(...vals) - 1, max = Math.max(...vals) + 1;
+    const px = i => entries.length === 1 ? w / 2 : 30 + i * (w - 60) / (entries.length - 1);
+    const py = v => h - 20 - (v - min) / (max - min) * (h - 40);
+    ctx.strokeStyle = '#ffb6c1'; ctx.lineWidth = 2; ctx.beginPath();
+    entries.forEach((e, i) => { const x = px(i), y = py(e.v); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.stroke();
+    ctx.fillStyle = '#ffb6c1';
+    entries.forEach((e, i) => { ctx.beginPath(); ctx.arc(px(i), py(e.v), 3.5, 0, 7); ctx.fill(); });
+    ctx.fillStyle = '#9a9aab'; ctx.font = '10px sans-serif';
+    entries.forEach((e, i) => { if (i % Math.ceil(entries.length / 6) === 0) ctx.fillText(e.k.slice(5), px(i) - 12, h - 6); });
+  }
+
+  // ---- KPI ----
+  function refreshKPI() {
+    document.getElementById('kpi-weight').textContent = todayCheckin.weight || '—';
+    document.getElementById('kpi-water').textContent = todayCheckin.water ? todayCheckin.water + 'ml' : '—';
+    let fc = 0; Object.keys(fitness).forEach(k => { if (k.startsWith(monthKey())) fc += fitness[k].length; });
+    document.getElementById('kpi-fitness').textContent = fc;
+    document.getElementById('kpi-todo').textContent = todos.filter(t => !t.done).length;
+  }
+
+  function escapeHtml(s) { return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+  function flash(msg) {
+    const el = document.createElement('div');
+    el.textContent = msg;
+    el.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#2a2a37;color:#ececf1;padding:8px 16px;border-radius:999px;font-size:13px;z-index:50;border:1px solid #353545';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1400);
+  }
+
+  // ---- 初始化 ----
+  document.getElementById('today-date').textContent = '· ' + prettyDate(TODAY);
+  refreshNet(); fillCheckin(); renderDiets(); renderFitness(); renderTodos(); refreshKPI(); renderTrend();
+
+  // ---- Service Worker ----
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(e => console.warn('SW 注册失败:', e));
+    });
+  }
+
+  // 暴露给阶段二接入 Supabase 的钩子
+  window.__STELLA__ = { data, save, refreshNet, setStatus, renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); refreshKPI(); renderTrend(); } };
+})();
