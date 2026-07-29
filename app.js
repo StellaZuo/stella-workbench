@@ -444,6 +444,69 @@
     } catch (e) { console.warn('pull 失败', e); flash('同步失败，稍后再试'); }
   }
 
+  // ---- GEO 创业业务（客户台账 + GEO 动态，里里侧也可写入） ----
+  const clients = ensure(data, 'clients', []);
+  const geoNotes = ensure(data, 'geo_notes', []);
+  function geoFiltered() {
+    const q = (document.getElementById('geo-search').value || '').trim().toLowerCase();
+    const f = document.getElementById('geo-filter').value;
+    return clients.filter(c => {
+      if (f && c.status !== f) return false;
+      if (q && !(c.name + ' ' + (c.industry || '')).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+  function renderClients() {
+    const box = document.getElementById('geo-list');
+    if (!box) return;
+    const arr = geoFiltered();
+    if (!arr.length) { box.innerHTML = '<div class="empty">还没有客户' + (clients.length ? '（无匹配）' : '，去下方添加，或让里里同步') + '</div>'; return; }
+    box.innerHTML = arr.map(c =>
+      `<div class="item"><div class="body"><div><span class="tag">${c.status || '意向'}</span><b>${escapeHtml(c.name)}</b></div>` +
+      `<div class="meta">${c.contact ? '对接 ' + escapeHtml(c.contact) + ' · ' : ''}${c.industry ? escapeHtml(c.industry) + ' · ' : ''}下一步：${escapeHtml(c.next || '—')}</div></div>` +
+      `<button class="del" data-id="${c.id}">×</button></div>`
+    ).join('');
+    box.querySelectorAll('.del').forEach(d => d.onclick = () => {
+      const i = clients.findIndex(x => x.id == d.dataset.id); clients.splice(i, 1); save(); renderClients();
+    });
+  }
+  document.getElementById('add-client').addEventListener('click', () => {
+    const name = document.getElementById('geo-name').value.trim();
+    if (!name) return flash('填客户名');
+    clients.unshift({
+      id: Date.now(), name,
+      status: document.getElementById('geo-status').value,
+      contact: document.getElementById('geo-contact').value.trim(),
+      industry: document.getElementById('geo-industry').value.trim(),
+      next: document.getElementById('geo-next').value.trim(),
+      updated: TODAY, source: 'app'
+    });
+    ['geo-name', 'geo-contact', 'geo-industry', 'geo-next'].forEach(i => document.getElementById(i).value = '');
+    save(); renderClients();
+  });
+  document.getElementById('geo-search').addEventListener('input', renderClients);
+  document.getElementById('geo-filter').addEventListener('change', renderClients);
+  function renderGeoNotes() {
+    const box = document.getElementById('geo-notes-list');
+    if (!box) return;
+    if (!geoNotes.length) { box.innerHTML = '<div class="empty">还没有 GEO 动态</div>'; return; }
+    box.innerHTML = geoNotes.slice(0, 20).map(n =>
+      `<div class="item"><div class="body"><div><span class="tag">${escapeHtml(n.client || '通用')}</span>${escapeHtml(n.note)}</div>` +
+      `<div class="meta">${prettyDate(n.date)}${n.source === '里里' ? ' · 来自里里' : ''}</div></div>` +
+      `<button class="del" data-id="${n.id}">×</button></div>`
+    ).join('');
+    box.querySelectorAll('.del').forEach(d => d.onclick = () => {
+      const i = geoNotes.findIndex(x => x.id == d.dataset.id); geoNotes.splice(i, 1); save(); renderGeoNotes();
+    });
+  }
+  document.getElementById('add-geo-note').addEventListener('click', () => {
+    const note = document.getElementById('geo-note-content').value.trim();
+    if (!note) return flash('写点内容');
+    geoNotes.unshift({ id: Date.now(), date: TODAY, client: document.getElementById('geo-note-client').value.trim() || '通用', note, source: 'app' });
+    document.getElementById('geo-note-content').value = '';
+    save(); renderGeoNotes();
+  });
+
   // ---- 体重趋势 ----
   function renderTrend() {
     const cv = document.getElementById('trend-canvas');
@@ -489,7 +552,7 @@
   // ---- 初始化 ----
   document.getElementById('today-date').textContent = '· ' + prettyDate(TODAY);
   setStatus('local');
-  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); refreshKPI(); renderTrend();
+  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderClients(); renderGeoNotes(); refreshKPI(); renderTrend();
 
   // 驾驶舱：今日待办 / 饮食快捷编辑
   document.getElementById('dash-add-todo').addEventListener('click', addTodoFromDash);
@@ -522,6 +585,6 @@
   window.__STELLA__ = {
     data, save, initCloud, doPush,
     setStatus,
-    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); refreshKPI(); renderTrend(); }
+    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderClients(); renderGeoNotes(); refreshKPI(); renderTrend(); }
   };
 })();
