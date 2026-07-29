@@ -61,6 +61,11 @@ header {
 .status.offline .dot { background: var(--red); box-shadow: 0 0 0 3px rgba(239,93,111,0.18); }
 .status.offline { color: var(--red); border-color: rgba(239,93,111,0.45); }
 
+/* 🔄 同步按钮 */
+.sync-btn { background: rgba(255,255,255,0.95); border: 1px solid rgba(255,255,255,0.7); border-radius: 999px; padding: 5px 9px; font-size: 15px; cursor: pointer; margin-left: 8px; line-height: 1; }
+.sync-btn:active { transform: scale(0.92); }
+.tag { display: inline-block; padding: 1px 9px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--pink-deep); font-size: 12px; margin-right: 6px; }
+
 main { padding: 16px; max-width: 720px; margin: 0 auto; }
 .section { display: none; }
 .section.active { display: block; }
