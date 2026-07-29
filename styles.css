@@ -99,6 +99,15 @@ button.sm { padding: 7px 12px; font-size: 13px; }
 .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); font-size: 13px; color: var(--text); cursor: pointer; }
+
+/* ---- 业务全景聚合卡 ---- */
+.sub-h { font-size: 13px; font-weight: 600; color: var(--pink-deep); margin: 14px 0 8px; }
+.bars { display: flex; flex-direction: column; gap: 7px; }
+.bar-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.bar-label { width: 72px; flex: 0 0 72px; color: var(--muted); }
+.bar-track { flex: 1; height: 10px; background: var(--surface-2); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+.bar { height: 100%; border-radius: 999px; transition: width .4s ease; min-width: 2px; }
+.bar-num { width: 30px; flex: 0 0 30px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; }
 .chip.on { background: rgba(255,123,160,0.16); border-color: var(--pink); color: var(--pink-deep); font-weight: 600; }
 
 .item { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); }
