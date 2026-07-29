@@ -128,3 +128,12 @@ nav.tabbar .ico { font-size: 18px; }
 .kpi.pink .v { color: var(--pink); }
 .kpi.blue .v { color: var(--blue); }
 .kpi.green .v { color: var(--green); }
+
+/* 云端未配置提示 */
+.banner {
+  display: flex; align-items: flex-start; gap: 10px; justify-content: space-between;
+  background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.4);
+  color: var(--amber); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; font-size: 13px;
+}
+.banner code { background: rgba(0,0,0,0.35); padding: 1px 6px; border-radius: 5px; color: var(--amber); }
+.banner .x { cursor: pointer; color: var(--muted); font-size: 18px; line-height: 1; flex: 0 0 auto; }
