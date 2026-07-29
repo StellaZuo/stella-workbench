@@ -447,6 +447,37 @@
   // ---- GEO 创业业务（客户台账 + GEO 动态，里里侧也可写入） ----
   const clients = ensure(data, 'clients', []);
   const geoNotes = ensure(data, 'geo_notes', []);
+  // ---- 业务全景（脱敏聚合，来自云端 geo_stats）----
+  function renderGeoStats() {
+    const box = document.getElementById('geo-overview');
+    if (!box) return;
+    const s = data.geo_stats;
+    if (!s) { box.innerHTML = '<div class="empty">暂无聚合数据，点 🔄 同步，或让里里重跑建账后推送。</div>'; return; }
+    const total = s.total || 0;
+    const statusOrder = ['签约', '已成交', '打单', '商机', '渠道', '业务合伙人'];
+    const statusColor = { '签约': '#ff6f9d', '已成交': '#3fb98a', '打单': '#6aa9ff', '商机': '#ffa94d', '渠道': '#b08bff', '业务合伙人': '#4dd0e1' };
+    const srcOrder = ['企微', '腾讯', '双源'];
+    const srcColor = { '企微': '#ff8fb1', '腾讯': '#6aa9ff', '双源': '#b08bff' };
+    const bars = (order, map, colors) => order.filter(k => map[k]).map(k => {
+      const v = map[k]; const pct = total ? Math.round(v / total * 100) : 0;
+      return `<div class="bar-row"><span class="bar-label">${k}</span><div class="bar-track"><div class="bar" style="width:${pct}%;background:${colors[k]}"></div></div><span class="bar-num">${v}</span></div>`;
+    }).join('');
+    box.innerHTML =
+      `<div class="kpis">
+        <div class="kpi pink"><div class="v">${total}</div><div class="l">活跃客户</div></div>
+        <div class="kpi"><div class="v">${s.landed || 0}</div><div class="l">已落地</div></div>
+        <div class="kpi"><div class="v">${s.pipeline || 0}</div><div class="l">推进中</div></div>
+        <div class="kpi"><div class="v">${s.channel || 0}</div><div class="l">渠道伙伴</div></div>
+      </div>
+      <div class="sub-h">状态分布</div>
+      <div class="bars">${bars(statusOrder, s.byStatus || {}, statusColor)}</div>
+      <div class="sub-h">来源分布</div>
+      <div class="bars">${bars(srcOrder, s.bySource || {}, srcColor)}</div>
+      <div class="meta" style="padding-top:8px">行业信息完整 ${s.industryFilled || 0}/${total} 家 · 更新于 ${s.asOf || '—'}</div>`;
+    const aof = document.getElementById('geo-asof');
+    if (aof) aof.textContent = s.asOf ? '· ' + s.asOf : '';
+  }
+
   function geoFiltered() {
     const q = (document.getElementById('geo-search').value || '').trim().toLowerCase();
     const f = document.getElementById('geo-filter').value;
@@ -552,7 +583,7 @@
   // ---- 初始化 ----
   document.getElementById('today-date').textContent = '· ' + prettyDate(TODAY);
   setStatus('local');
-  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderClients(); renderGeoNotes(); refreshKPI(); renderTrend();
+  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderGeoStats(); renderClients(); renderGeoNotes(); refreshKPI(); renderTrend();
 
   // 驾驶舱：今日待办 / 饮食快捷编辑
   document.getElementById('dash-add-todo').addEventListener('click', addTodoFromDash);
@@ -585,6 +616,6 @@
   window.__STELLA__ = {
     data, save, initCloud, doPush,
     setStatus,
-    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderClients(); renderGeoNotes(); refreshKPI(); renderTrend(); }
+    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderGeoStats(); renderClients(); renderGeoNotes(); refreshKPI(); renderTrend(); }
   };
 })();
