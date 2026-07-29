@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#ffb6c1" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./styles.css" />
+  <title>Stella Zuo</title>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">★</div>
+      <div>
+        <h1>Stella Zuo</h1>
+        <div class="sub">个人全能工作台</div>
+      </div>
+    </div>
+    <div id="status-badge" class="status local">
+      <span class="dot"></span><span class="txt">本地模式</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- 工作台总览 -->
+    <section id="sec-overview" class="section active">
+      <div class="card">
+        <h2>今日概览</h2>
+        <div class="kpis">
+          <div class="kpi pink"><div class="v" id="kpi-weight">—</div><div class="l">今日体重(斤)</div></div>
+          <div class="kpi blue"><div class="v" id="kpi-water">—</div><div class="l">饮水</div></div>
+          <div class="kpi green"><div class="v" id="kpi-fitness">0</div><div class="l">本月健身(次)</div></div>
+          <div class="kpi"><div class="v" id="kpi-todo">0</div><div class="l">待办未完成</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>三大板块</h2>
+        <div class="row">
+          <div class="chip">💼 GEO 创业业务</div>
+          <div class="chip">📚 学习成长</div>
+          <div class="chip">🌿 减脂健康</div>
+        </div>
+        <p class="empty" style="text-align:left;padding:12px 0 0">数据本地自动保存，接通云端后多设备同步。</p>
+      </div>
+    </section>
+
+    <!-- GEO 创业业务 -->
+    <section id="sec-geo" class="section">
+      <div class="placeholder">
+        <div class="big">💼</div>
+        <p>GEO 创业业务管理模块<br/>（客户台账 / 内容运维 / PPT物料 / 会议支撑）</p>
+        <p style="margin-top:8px">阶段三接入，将融合现有客户台账数据。</p>
+      </div>
+    </section>
+
+    <!-- 学习专区 -->
+    <section id="sec-study" class="section">
+      <div class="placeholder">
+        <div class="big">📚</div>
+        <p>学习专区 · 五大赛道知识库<br/>（GEO / Agent / 运营 / 内心 / 认知）</p>
+        <p style="margin-top:8px">阶段四接入。</p>
+      </div>
+    </section>
+
+    <!-- 生活 · 减脂健康 -->
+    <section id="sec-life" class="section">
+      <div class="card">
+        <h2>🌿 今日健康打卡 <span id="today-date" style="font-size:12px;color:var(--muted);font-weight:400"></span></h2>
+        <div class="row">
+          <div class="field">
+            <label>晨起体重 (斤)</label>
+            <input id="weight-input" type="number" inputmode="decimal" placeholder="如 129" />
+          </div>
+          <div class="field">
+            <label>饮水量 (ml)</label>
+            <input id="water-input" type="number" inputmode="numeric" placeholder="如 2000" />
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="chip" id="binge-toggle">记录暴食</button>
+          <button class="primary" id="save-checkin">保存今日打卡</button>
+        </div>
+        <div id="binge-form" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+          <div class="row">
+            <div class="field"><label>时间</label><input id="binge-time" type="text" placeholder="如 23:00" /></div>
+            <div class="field"><label>食物</label><input id="binge-food" type="text" placeholder="如 麻辣烫" /></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div class="field"><label>诱发情绪</label><input id="binge-mood" type="text" placeholder="如 焦虑" /></div>
+            <div class="field"><label>核心诱因</label><input id="binge-cause" type="text" placeholder="如 长时间空腹" /></div>
+          </div>
+          <div class="btn-row"><button class="primary sm" id="add-binge">添加暴食记录</button></div>
+        </div>
+        <div id="binge-list" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <h2>体重趋势</h2>
+        <canvas id="trend-canvas"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>饮食记录</h2>
+        <div class="row">
+          <div class="field"><label>时段</label>
+            <select id="diet-meal"><option>早餐</option><option>午餐</option><option>晚餐</option><option>加餐</option><option>夜宵</option></select>
+          </div>
+          <div class="field" style="flex:2"><label>内容</label><input id="diet-content" type="text" placeholder="吃了什么" /></div>
+        </div>
+        <div class="btn-row"><button class="primary" id="add-diet">添加</button></div>
+        <div id="diet-list" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <h2>居家健身打卡</h2>
+        <div class="row">
+          <div class="field" style="flex:2"><label>训练项目 (方案库)</label>
+            <select id="fitness-project">
+              <option>壶铃摇摆 8kg</option><option>哑铃推举 2kg</option><option>壶铃深蹲 8kg</option>
+              <option>哑铃划船 2kg</option><option>壶铃硬拉 8kg</option><option>核心训练</option><option>拉伸放松</option>
+            </select>
+          </div>
+          <div class="field"><label>时长(分)</label><input id="fitness-min" type="number" inputmode="numeric" placeholder="30" /></div>
+        </div>
+        <div class="btn-row"><button class="primary" id="add-fitness">打卡</button></div>
+        <div id="fitness-stat" class="meta" style="margin-top:8px"></div>
+        <div id="fitness-list" style="margin-top:6px"></div>
+      </div>
+
+      <div class="card">
+        <h2>待办 / 任务</h2>
+        <div class="row">
+          <div class="field" style="flex:3"><input id="todo-input" type="text" placeholder="添加待办，回车保存" /></div>
+          <div class="field" style="flex:0"><button class="primary" id="add-todo">添加</button></div>
+        </div>
+        <div id="todo-groups" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <h2>AI 深度探讨</h2>
+        <div class="placeholder" style="padding:18px 0">
+          <div class="big">🤖</div>
+          <p>专属 AI 研讨窗口<br/>分析进度 / 复盘饮食 / 疏导情绪</p>
+          <p style="margin-top:8px">阶段五接入（需 AI 密钥）。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 复盘 -->
+    <section id="sec-review" class="section">
+      <div class="placeholder">
+        <div class="big">📝</div>
+        <p>日 / 周 / 月 复盘模块<br/>阶段后续接入。</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button data-sec="overview" class="active"><span class="ico">🏠</span>工作台</button>
+    <button data-sec="geo"><span class="ico">💼</span>业务</button>
+    <button data-sec="study"><span class="ico">📚</span>学习</button>
+    <button data-sec="life"><span class="ico">🌿</span>生活</button>
+    <button data-sec="review"><span class="ico">📝</span>复盘</button>
+  </nav>
+
+  <script src="./app.js"></script>
+</body>
+</html>
