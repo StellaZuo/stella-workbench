@@ -31,7 +31,7 @@
     selectedDate = d;
     document.querySelectorAll('.global-date-picker').forEach(el => { if (el.value !== d) el.value = d; });
     document.querySelectorAll('.date-label').forEach(el => el.textContent = prettyDate(d));
-    fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderLearns(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); renderFatlossGoals(); renderChat();
+    fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderLearns(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); renderFatlossGoals(); renderFinance(); renderMacro(); renderBooks(); renderChat();
     updateReadonlyState();
   }
   function updateReadonlyState() {
@@ -829,6 +829,175 @@
     ).join('');
   }
 
+  // ===== 驾驶舱 · 工作板块（理财 / 国际政经 / 书籍） =====
+  const financeNews = ensure(data, 'financeNews', { items: [], trend: '', learning: [] });
+  const financeLedger = ensure(data, 'financeLedger', []);
+  const macroNews = ensure(data, 'macroNews', { items: [], analysis: '' });
+  const bookRecs = ensure(data, 'bookRecs', { items: [] });
+  const myBooks = ensure(data, 'myBooks', []);
+
+  function renderFinance() {
+    const list = document.getElementById('finance-list');
+    const trend = document.getElementById('finance-trend');
+    if (trend) trend.textContent = financeNews.trend || '暂无市场趋势简析，点 🔄 同步拉取最新热点。';
+    if (list) {
+      const items = financeNews.items || [];
+      if (!items.length) list.innerHTML = '<div class="empty">暂无理财热点，点顶部 🔄 同步拉取</div>';
+      else {
+        list.innerHTML = items.map(n =>
+          `<div class="item"><div class="body">` +
+          (n.url ? `<a class="news-title" href="${escapeAttr(n.url)}" target="_blank" rel="noopener">${escapeHtml(n.title || '资讯')}</a>`
+                 : `<div class="news-title">${escapeHtml(n.title || '资讯')}</div>`) +
+          (n.tag ? ` <span class="chip sm">${escapeHtml(n.tag)}</span>` : '') +
+          (n.summary ? `<div class="meta">${escapeHtml(n.summary)}</div>` : '') +
+          `</div></div>`
+        ).join('');
+      }
+    }
+    const ledgerList = document.getElementById('finance-ledger-list');
+    if (ledgerList) {
+      if (!financeLedger.length) ledgerList.innerHTML = '<div class="empty">还没有收支记录</div>';
+      else {
+        ledgerList.innerHTML = financeLedger.slice().reverse().map(e => {
+          const balance = (parseFloat(e.income) || 0) - (parseFloat(e.expense) || 0);
+          return `<div class="item"><div class="body"><div><b>${e.date}</b> · 收 ¥${e.income || 0} · 支 ¥${e.expense || 0} · 余 ¥${balance.toFixed(2)}</div>${e.note ? `<div class="meta">${escapeHtml(e.note)}</div>` : ''}</div></div>`;
+        }).join('');
+      }
+    }
+    const learnList = document.getElementById('finance-learning-list');
+    if (learnList) {
+      const lessons = financeNews.learning || [];
+      if (!lessons.length) learnList.innerHTML = '<div class="empty">暂无理财学习清单</div>';
+      else {
+        learnList.innerHTML = lessons.map((l, i) =>
+          `<div class="item"><div class="body">` +
+          `<div class="news-title">${escapeHtml(l.title)} <span class="chip sm">${escapeHtml(l.level || '基础')}</span></div>` +
+          `<div class="row" style="align-items:center;gap:10px;margin-top:6px">` +
+          `<input type="range" min="0" max="100" value="${l.progress || 0}" data-fi="${i}" class="finance-progress" style="flex:1" />` +
+          `<span class="meta progress-val-${i}">${l.progress || 0}%</span>` +
+          `</div></div></div>`
+        ).join('');
+      }
+    }
+  }
+
+  function addFinanceLedger() {
+    const date = document.getElementById('finance-date').value || TODAY;
+    const income = parseFloat(document.getElementById('finance-income').value) || 0;
+    const expense = parseFloat(document.getElementById('finance-expense').value) || 0;
+    const note = document.getElementById('finance-note').value.trim();
+    if (!income && !expense && !note) return;
+    financeLedger.push({ date, income, expense, note });
+    save(); renderFinance();
+    document.getElementById('finance-income').value = '';
+    document.getElementById('finance-expense').value = '';
+    document.getElementById('finance-note').value = '';
+    flash('已记录收支');
+  }
+
+  function renderMacro() {
+    const list = document.getElementById('macro-list');
+    const analysis = document.getElementById('macro-analysis');
+    if (analysis) analysis.textContent = macroNews.analysis || '暂无趋势分析，点顶部 🔄 同步拉取最新资讯。';
+    if (list) {
+      const items = macroNews.items || [];
+      if (!items.length) list.innerHTML = '<div class="empty">暂无国际政经资讯，点顶部 🔄 同步拉取</div>';
+      else {
+        list.innerHTML = items.map(n =>
+          `<div class="item"><div class="body">` +
+          (n.url ? `<a class="news-title" href="${escapeAttr(n.url)}" target="_blank" rel="noopener">${escapeHtml(n.title || '资讯')}</a>`
+                 : `<div class="news-title">${escapeHtml(n.title || '资讯')}</div>`) +
+          (n.source ? `<div class="meta news-src">${escapeHtml(n.source)}</div>` : '') +
+          (n.summary ? `<div class="meta">${escapeHtml(n.summary)}</div>` : '') +
+          `</div></div>`
+        ).join('');
+      }
+    }
+  }
+
+  function renderBooks() {
+    const recList = document.getElementById('book-rec-list');
+    if (recList) {
+      const items = bookRecs.items || [];
+      if (!items.length) recList.innerHTML = '<div class="empty">暂无书籍推荐，点顶部 🔄 同步拉取</div>';
+      else {
+        recList.innerHTML = items.map(b =>
+          `<div class="item"><div class="body">` +
+          `<div class="news-title">${escapeHtml(b.title)} <span class="chip sm">${escapeHtml(b.tag || '推荐')}</span></div>` +
+          `<div class="meta">${escapeHtml(b.author || '')}${b.rating ? ' · ' + escapeHtml(b.rating) : ''}</div>` +
+          (b.summary ? `<div class="meta">${escapeHtml(b.summary)}</div>` : '') +
+          (b.readUrl ? `<a class="chip" href="${escapeAttr(b.readUrl)}" target="_blank" rel="noopener">📖 打开阅读</a>` : '') +
+          `</div></div>`
+        ).join('');
+      }
+    }
+    const mineList = document.getElementById('book-mine-list');
+    if (mineList) {
+      if (!myBooks.length) mineList.innerHTML = '<div class="empty">还没有书单，添加一本吧</div>';
+      else {
+        mineList.innerHTML = myBooks.slice().reverse().map(b =>
+          `<div class="item"><div class="body">` +
+          `<div class="news-title">${escapeHtml(b.title)} <span class="chip sm">${escapeHtml(b.status || '想读')}</span></div>` +
+          (b.author ? `<div class="meta">${escapeHtml(b.author)}</div>` : '') +
+          (b.progress ? `<div class="meta">${escapeHtml(b.progress)}</div>` : '') +
+          `</div></div>`
+        ).join('');
+      }
+    }
+  }
+
+  function addMyBook() {
+    const title = document.getElementById('book-title').value.trim();
+    const author = document.getElementById('book-author').value.trim();
+    const status = document.getElementById('book-status').value;
+    const progress = document.getElementById('book-progress').value.trim();
+    if (!title) return;
+    myBooks.push({ id: Date.now(), title, author, status, progress });
+    save(); renderBooks();
+    document.getElementById('book-title').value = '';
+    document.getElementById('book-author').value = '';
+    document.getElementById('book-progress').value = '';
+    flash('已加入书单');
+  }
+
+  // 工作板块子 tab 切换
+  document.querySelectorAll('.finance-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.finance-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['hot', 'ledger', 'learn'].forEach(t => {
+        document.getElementById('finance-pane-' + t).style.display = btn.dataset.financeTab === t ? 'block' : 'none';
+      });
+    });
+  });
+  document.querySelectorAll('.book-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.book-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['rec', 'mine'].forEach(t => {
+        document.getElementById('book-pane-' + t).style.display = btn.dataset.bookTab === t ? 'block' : 'none';
+      });
+    });
+  });
+
+  const financeAdd = document.getElementById('finance-add');
+  if (financeAdd) financeAdd.addEventListener('click', addFinanceLedger);
+  const bookAdd = document.getElementById('book-add');
+  if (bookAdd) bookAdd.addEventListener('click', addMyBook);
+
+  // 理财学习进度滑块
+  document.addEventListener('input', e => {
+    if (e.target.classList.contains('finance-progress')) {
+      const idx = parseInt(e.target.dataset.fi, 10);
+      if (financeNews.learning && financeNews.learning[idx]) {
+        financeNews.learning[idx].progress = parseInt(e.target.value, 10);
+        const valEl = document.querySelector('.progress-val-' + idx);
+        if (valEl) valEl.textContent = e.target.value + '%';
+        save();
+      }
+    }
+  });
+
   async function fetchNews() {
     let items = [];
     let asOf = '';
@@ -1050,8 +1219,10 @@
   // ---- 初始化 ----
   bindDatePickers();
   document.getElementById('today-date').textContent = '· ' + prettyDate(selectedDate);
+  const financeDate = document.getElementById('finance-date');
+  if (financeDate) financeDate.value = TODAY;
   setStatus('local');
-  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); renderFatlossGoals();
+  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); renderFatlossGoals(); renderFinance(); renderMacro(); renderBooks();
   // 首次进入且本地无资讯时，自动同步里里抓取的最新中文 GEO 资讯（同会话仅一次）
     // 首次进入且本地无资讯时，自动拉一次云端中文 GEO（同会话仅一次）
     if (navigator.onLine && news.length === 0 && !sessionStorage.getItem('stella-news-autofetch')) {
@@ -1090,6 +1261,6 @@
   window.__STELLA__ = {
     data, save, initCloud, doPush,
     setStatus,
-    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); renderFatlossGoals(); }
+    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); renderFatlossGoals(); renderFinance(); renderMacro(); renderBooks(); }
   };
 })();
