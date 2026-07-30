@@ -462,7 +462,7 @@
           if (res.tab) setTimeout(() => { if (window.__BIZ__) window.__BIZ__.openBiz(res.tab); }, 350);
           return;
         }
-        flash('采纳失败：业务模块未就绪，请刷新重试');
+        flash('采纳失败：' + (res.err || '业务模块未就绪，请刷新重试'));
       } else {
         data.biz_inbox.splice(i, 1); save(); renderTaskCenter(); flash('已忽略');
       }
