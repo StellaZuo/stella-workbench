@@ -86,6 +86,38 @@
       </div>
 
       <div class="card">
+        <h2>📰 资讯速览 <span class="meta" id="news-asof" style="font-size:12px;font-weight:400"></span></h2>
+        <div id="news-list"></div>
+        <div class="btn-row"><button class="primary sm" id="news-refresh">刷新资讯</button></div>
+        <div id="news-key-bar" class="key-bar" style="display:none">
+          <span>默认用免费公开源，无需密钥；可换中文/自有源</span>
+          <button id="news-config-btn" class="sm">配置源</button>
+        </div>
+        <div id="news-config-panel" class="config-panel" style="display:none">
+          <div class="row">
+            <div class="field" style="flex:1"><label>模式</label>
+              <select id="news-mode">
+                <option value="default">默认免费源（Hacker News·AI）</option>
+                <option value="custom">自定义 JSON 接口</option>
+                <option value="ai">用 AI 生成中文资讯</option>
+              </select>
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div class="field" style="flex:1"><label>接口地址 / AI Base</label><input id="news-base" type="text" placeholder="https://... 或 https://api.openai.com/v1" /></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div class="field" style="flex:1"><label>密钥（可选）</label><input id="news-key" type="password" placeholder="sk-... 或接口 Key" /></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div class="field" style="flex:1"><label>检索词</label><input id="news-query" type="text" placeholder="如 AI / GEO / 创业" /></div>
+          </div>
+          <div class="btn-row"><button class="primary sm" id="news-save-config">保存并关闭</button></div>
+          <p class="meta">自定义源请返回 JSON 数组（或含 articles/data/results 字段）。密钥仅存本机浏览器，不同步云端。</p>
+        </div>
+      </div>
+
+      <div class="card">
         <h2>四大板块</h2>
         <div class="row">
           <button class="chip" data-goto="geo">💼 GEO 创业业务</button>
@@ -155,11 +187,52 @@
 
     <!-- 学习专区 -->
     <section id="sec-study" class="section">
-      <div class="placeholder">
-        <div class="big">📚</div>
-        <p>学习专区 · 五大赛道知识库<br/>（GEO / Agent / 运营 / 内心 / 认知）</p>
-        <p style="margin-top:8px">阶段四接入。</p>
+      <div class="card">
+        <h2>📚 五大赛道</h2>
+        <div id="learn-tracks" class="track-grid"></div>
       </div>
+
+      <div class="card">
+        <h2>➕ 记录学习</h2>
+        <div class="row">
+          <div class="field"><label>赛道</label>
+            <select id="learn-track">
+              <option>Agent 开发</option>
+              <option>GEO 知识与开发</option>
+              <option>项目运营经营</option>
+              <option>内心能量与情绪管理</option>
+              <option>人生智慧与长期认知</option>
+            </select>
+          </div>
+          <div class="field"><label>类型</label>
+            <select id="learn-type">
+              <option>课程</option><option>书籍</option><option>文章</option><option>实践</option><option>灵感</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div class="field" style="flex:2"><label>标题</label><input id="learn-title" type="text" placeholder="如 学习 LangChain 记忆机制" /></div>
+          <div class="field"><label>状态</label>
+            <select id="learn-status">
+              <option>想学</option><option>进行中</option><option>已掌握</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div class="field" style="flex:1"><label>笔记 / 要点</label><textarea id="learn-note" rows="2" placeholder="核心收获、链接、待办…"></textarea></div>
+        </div>
+        <div class="btn-row"><button class="primary" id="add-learn">保存记录</button></div>
+      </div>
+
+      <div class="card">
+        <h2>📖 学习记录 <span class="meta" id="learn-count" style="font-size:12px;font-weight:400"></span></h2>
+        <div class="row">
+          <div class="field"><select id="learn-track-filter"><option value="">全部赛道</option><option>Agent 开发</option><option>GEO 知识与开发</option><option>项目运营经营</option><option>内心能量与情绪管理</option><option>人生智慧与长期认知</option></select></div>
+          <div class="field"><select id="learn-status-filter"><option value="">全部状态</option><option>想学</option><option>进行中</option><option>已掌握</option></select></div>
+        </div>
+        <div id="learn-list" style="margin-top:10px"></div>
+      </div>
+      <p class="meta" style="color:var(--muted);padding:4px 2px 0">里里在对话中帮你整理的学习要点，也会同步到这里——工作台点 🔄 拉取。</p>
     </section>
 
     <!-- 生活 · 减脂健康 -->
@@ -237,11 +310,34 @@
       </div>
 
       <div class="card">
-        <h2>AI 深度探讨</h2>
-        <div class="placeholder" style="padding:18px 0">
-          <div class="big">🤖</div>
-          <p>专属 AI 研讨窗口<br/>分析进度 / 复盘饮食 / 疏导情绪</p>
-          <p style="margin-top:8px">阶段五接入（需 AI 密钥）。</p>
+        <h2>🤖 AI 研讨窗口</h2>
+        <div class="ai-scenes">
+          <button class="chip" data-scene="fatigue">分析减脂进度</button>
+          <button class="chip" data-scene="diet">复盘今日饮食</button>
+          <button class="chip" data-scene="mood">疏导情绪</button>
+          <button class="chip" data-scene="work">复盘今日工作</button>
+        </div>
+        <div id="ai-chat-box" class="chat-box"></div>
+        <div class="chat-input-row">
+          <input id="ai-chat-input" type="text" placeholder="问里里，或点上方场景…" />
+          <button id="ai-chat-send" class="primary">发送</button>
+        </div>
+        <div id="ai-key-bar" class="key-bar" style="display:none">
+          <span>需要 AI 密钥才能联网回复</span>
+          <button id="ai-config-btn" class="sm">配置密钥</button>
+        </div>
+        <div id="ai-config-panel" class="config-panel" style="display:none">
+          <div class="row">
+            <div class="field" style="flex:1"><label>API Base（OpenAI 兼容）</label><input id="ai-base" type="text" value="https://api.openai.com/v1" /></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div class="field" style="flex:1"><label>API Key</label><input id="ai-key" type="password" placeholder="sk-..." /></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div class="field"><label>模型</label><input id="ai-model" type="text" value="gpt-4o-mini" /></div>
+          </div>
+          <div class="btn-row"><button class="primary sm" id="ai-save-key">保存并关闭</button></div>
+          <p class="meta">密钥仅存在本机浏览器，不会同步到云端。</p>
         </div>
       </div>
     </section>
