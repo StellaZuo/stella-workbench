@@ -69,9 +69,9 @@
     const todoN = biz.clients.filter(c => (c.next || '').trim()).length + biz.meetings.filter(m => !m.done).length;
     let statsHtml = '<div class="empty">暂无脱敏聚合数据。让里里在对话里跑建账脚本并推送，或点首页 🔄 同步。</div>';
     if (s) {
-      const byStatus = {}; Object.keys(s.byStatus || {}).forEach(k => { const nk = (k === '签约' || k === '已成交') ? '已签约/成交' : k; byStatus[nk] = (byStatus[nk] || 0) + (s.byStatus[k]); });
-      const order = ['已签约/成交', '打单', '商机', '渠道', '业务合伙人'];
-      const colors = { '已签约/成交': '#ff6f9d', '打单': '#6aa9ff', '商机': '#ffa94d', '渠道': '#b08bff', '业务合伙人': '#4dd0e1' };
+      const byStatus = {}; Object.keys(s.byStatus || {}).forEach(k => { const nk = (k === '签约' || k === '已成交' || k === '已签约') ? '已签约' : k; byStatus[nk] = (byStatus[nk] || 0) + (s.byStatus[k]); });
+      const order = ['已签约', '打单', '商机', '渠道', '业务合伙人'];
+      const colors = { '已签约': '#ff6f9d', '打单': '#6aa9ff', '商机': '#ffa94d', '渠道': '#b08bff', '业务合伙人': '#4dd0e1' };
       const total = s.total || 0;
       statsHtml = `<div class="kpis">
         <div class="kpi pink"><div class="v">${total}</div><div class="l">活跃客户</div></div>
