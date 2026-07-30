@@ -93,20 +93,21 @@
       </div>
 
       <div class="card">
-        <h2>📰 资讯速览 <span class="meta" id="news-asof" style="font-size:12px;font-weight:400"></span></h2>
+        <h2>🌐 GEO 行业资讯 <span class="meta" id="news-asof" style="font-size:12px;font-weight:400"></span></h2>
         <div id="news-list"></div>
-        <div class="btn-row"><button class="primary sm" id="news-refresh">刷新资讯</button></div>
+        <div class="btn-row"><button class="primary sm" id="news-refresh">⚡ 抓取最新</button></div>
         <div id="news-key-bar" class="key-bar" style="display:none">
-          <span>默认用免费公开源，无需密钥；可换中文/自有源</span>
+          <span>默认由里里抓取中文 GEO 资讯；也可换自定义 JSON 或 AI 生成</span>
           <button id="news-config-btn" class="sm">配置源</button>
         </div>
         <div id="news-config-panel" class="config-panel" style="display:none">
           <div class="row">
             <div class="field" style="flex:1"><label>模式</label>
               <select id="news-mode">
-                <option value="default">默认免费源（Hacker News·AI）</option>
+                <option value="geo">里里抓取（中文·GEO）</option>
                 <option value="custom">自定义 JSON 接口</option>
                 <option value="ai">用 AI 生成中文资讯</option>
+                <option value="hn">Hacker News（英文·AI）</option>
               </select>
             </div>
           </div>
