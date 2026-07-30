@@ -757,6 +757,11 @@
   const NEWS_CFG_KEY = 'stella-news-config-v1';
   const news = ensure(data, 'news', []);
   let newsConfig = (() => { try { return JSON.parse(localStorage.getItem(NEWS_CFG_KEY)) || {}; } catch (e) { return {}; } })();
+  // 强制中文 GEO 为默认，忽略旧版 HN/英文回退配置，避免手机端拉到英文
+  if (!newsConfig.mode || newsConfig.mode === 'hn' || newsConfig.mode === 'default') {
+    newsConfig.mode = 'geo';
+    try { localStorage.setItem(NEWS_CFG_KEY, JSON.stringify(newsConfig)); } catch (e) {}
+  }
   function saveNewsConfig() { localStorage.setItem(NEWS_CFG_KEY, JSON.stringify(newsConfig)); }
   function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
 
@@ -782,7 +787,7 @@
     try {
       if (newsConfig.mode === 'ai') items = await fetchNewsViaAI();
       else if (newsConfig.mode === 'custom') items = await fetchNewsCustom();
-      else if (newsConfig.mode === 'hn') items = await fetchNewsDefault();
+      else if (newsConfig.mode === 'hn') items = await fetchNewsGeo();
       else { items = await fetchNewsGeo(); asOf = data.newsAsOf; }
     } catch (e) {
       console.warn('news fetch failed', e);
@@ -981,10 +986,11 @@
   setStatus('local');
   fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); renderFatlossGoals();
   // 首次进入且本地无资讯时，自动同步里里抓取的最新中文 GEO 资讯（同会话仅一次）
-  if (navigator.onLine && news.length === 0 && !sessionStorage.getItem('stella-news-autofetch')) {
-    sessionStorage.setItem('stella-news-autofetch', '1');
-    fetchNews().catch(() => {});
-  }
+    // 首次进入且本地无资讯时，自动拉一次云端中文 GEO（同会话仅一次）
+    if (navigator.onLine && news.length === 0 && !sessionStorage.getItem('stella-news-autofetch')) {
+      sessionStorage.setItem('stella-news-autofetch', '1');
+      fetchNews().catch(() => {});
+    }
 
   // 驾驶舱：今日待办 / 饮食快捷编辑
   document.getElementById('dash-add-todo').addEventListener('click', addTodoFromDash);
