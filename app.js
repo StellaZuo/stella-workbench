@@ -792,105 +792,20 @@
     } catch (e) { console.warn('pull 失败', e); flash('同步失败，稍后再试'); }
   }
 
-  // ---- GEO 创业业务（客户台账 + GEO 动态，里里侧也可写入） ----
-  const clients = ensure(data, 'clients', []);
-  const geoNotes = ensure(data, 'geo_notes', []);
-  // ---- 业务全景（脱敏聚合，来自云端 geo_stats）----
-  function renderGeoStats() {
-    const box = document.getElementById('geo-overview');
-    if (!box) return;
-    const s = data.geo_stats;
-    if (!s) { box.innerHTML = '<div class="empty">暂无聚合数据，点 🔄 同步，或让里里重跑建账后推送。</div>'; return; }
-    const total = s.total || 0;
-    const rawStatus = s.byStatus || {};
-    const byStatus = {};
-    Object.keys(rawStatus).forEach(k => {
-      const nk = (k === '签约' || k === '已成交') ? '已签约/成交' : k;
-      byStatus[nk] = (byStatus[nk] || 0) + rawStatus[k];
-    });
-    const statusOrder = ['已签约/成交', '打单', '商机', '渠道', '业务合伙人'];
-    const statusColor = { '已签约/成交': '#ff6f9d', '打单': '#6aa9ff', '商机': '#ffa94d', '渠道': '#b08bff', '业务合伙人': '#4dd0e1' };
-    const srcOrder = ['企微', '腾讯', '双源'];
-    const srcColor = { '企微': '#ff8fb1', '腾讯': '#6aa9ff', '双源': '#b08bff' };
-    const bars = (order, map, colors) => order.filter(k => map[k]).map(k => {
-      const v = map[k]; const pct = total ? Math.round(v / total * 100) : 0;
-      return `<div class="bar-row"><span class="bar-label">${k}</span><div class="bar-track"><div class="bar" style="width:${pct}%;background:${colors[k]}"></div></div><span class="bar-num">${v}</span></div>`;
-    }).join('');
-    box.innerHTML =
-      `<div class="kpis">
-        <div class="kpi pink"><div class="v">${total}</div><div class="l">活跃客户</div></div>
-        <div class="kpi"><div class="v">${s.landed || 0}</div><div class="l">已落地</div></div>
-        <div class="kpi"><div class="v">${s.pipeline || 0}</div><div class="l">推进中</div></div>
-        <div class="kpi"><div class="v">${s.channel || 0}</div><div class="l">渠道伙伴</div></div>
-      </div>
-      <div class="sub-h">状态分布</div>
-      <div class="bars">${bars(statusOrder, byStatus, statusColor)}</div>
-      <div class="sub-h">来源分布</div>
-      <div class="bars">${bars(srcOrder, s.bySource || {}, srcColor)}</div>
-      <div class="meta" style="padding-top:8px">行业信息完整 ${s.industryFilled || 0}/${total} 家 · 更新于 ${s.asOf || '—'}</div>`;
-    const aof = document.getElementById('geo-asof');
-    if (aof) aof.textContent = s.asOf ? '· ' + s.asOf : '';
-  }
-
-  function geoFiltered() {
-    const q = (document.getElementById('geo-search').value || '').trim().toLowerCase();
-    const f = document.getElementById('geo-filter').value;
-    return clients.filter(c => {
-      if (f && c.status !== f) return false;
-      if (q && !(c.name + ' ' + (c.industry || '')).toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }
-  function renderClients() {
-    const box = document.getElementById('geo-list');
-    if (!box) return;
-    const arr = geoFiltered();
-    if (!arr.length) { box.innerHTML = '<div class="empty">还没有客户' + (clients.length ? '（无匹配）' : '，去下方添加，或让里里同步') + '</div>'; return; }
-    box.innerHTML = arr.map(c =>
-      `<div class="item"><div class="body"><div><span class="tag">${c.status || '意向'}</span><b>${escapeHtml(c.name)}</b></div>` +
-      `<div class="meta">${c.contact ? '对接 ' + escapeHtml(c.contact) + ' · ' : ''}${c.industry ? escapeHtml(c.industry) + ' · ' : ''}下一步：${escapeHtml(c.next || '—')}</div></div>` +
-      `<button class="del" data-id="${c.id}">×</button></div>`
-    ).join('');
-    box.querySelectorAll('.del').forEach(d => d.onclick = () => {
-      const i = clients.findIndex(x => x.id == d.dataset.id); clients.splice(i, 1); save(); renderClients();
-    });
-  }
-  document.getElementById('add-client').addEventListener('click', () => {
-    const name = document.getElementById('geo-name').value.trim();
-    if (!name) return flash('填客户名');
-    clients.unshift({
-      id: Date.now(), name,
-      status: document.getElementById('geo-status').value,
-      contact: document.getElementById('geo-contact').value.trim(),
-      industry: document.getElementById('geo-industry').value.trim(),
-      next: document.getElementById('geo-next').value.trim(),
-      updated: TODAY, source: 'app'
-    });
-    ['geo-name', 'geo-contact', 'geo-industry', 'geo-next'].forEach(i => document.getElementById(i).value = '');
-    save(); renderClients();
-  });
-  document.getElementById('geo-search').addEventListener('input', renderClients);
-  document.getElementById('geo-filter').addEventListener('change', renderClients);
-  function renderGeoNotes() {
-    const box = document.getElementById('geo-notes-list');
-    if (!box) return;
-    if (!geoNotes.length) { box.innerHTML = '<div class="empty">还没有 GEO 动态</div>'; return; }
-    box.innerHTML = geoNotes.slice(0, 20).map(n =>
-      `<div class="item"><div class="body"><div><span class="tag">${escapeHtml(n.client || '通用')}</span>${escapeHtml(n.note)}</div>` +
-      `<div class="meta">${prettyDate(n.date)}${n.source === '里里' ? ' · 来自里里' : ''}</div></div>` +
-      `<button class="del" data-id="${n.id}">×</button></div>`
-    ).join('');
-    box.querySelectorAll('.del').forEach(d => d.onclick = () => {
-      const i = geoNotes.findIndex(x => x.id == d.dataset.id); geoNotes.splice(i, 1); save(); renderGeoNotes();
-    });
-  }
-  document.getElementById('add-geo-note').addEventListener('click', () => {
-    const note = document.getElementById('geo-note-content').value.trim();
-    if (!note) return flash('写点内容');
-    geoNotes.unshift({ id: Date.now(), date: TODAY, client: document.getElementById('geo-note-client').value.trim() || '通用', note, source: 'app' });
-    document.getElementById('geo-note-content').value = '';
-    save(); renderGeoNotes();
-  });
+  // ---- 业务模块迁移：把原本误存到公开云的客户/动态数据收回本地(stella-biz-v1)，并从 data 删除，停止上传泄露 ----
+  (function migrateBiz() {
+    const raw = localStorage.getItem('stella-biz-v1');
+    if (!raw && (data.clients || data.geo_notes)) {
+      const biz = {
+        clients: data.clients || [], geoNotes: data.geo_notes || [],
+        content: { materials: [], images: [], topics: [], ideas: [], articles: [], metrics: [], official: [] },
+        ppt: { standard: [], custom: [], auxiliary: [], knowledge: [] },
+        meetings: [], freqQuestions: [], passcode: null, updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem('stella-biz-v1', JSON.stringify(biz));
+    }
+    if (data.clients || data.geo_notes) { delete data.clients; delete data.geo_notes; save(); }
+  })();
 
   // ---- 体重趋势 ----
   function renderTrend() {
@@ -937,7 +852,7 @@
   // ---- 初始化 ----
   document.getElementById('today-date').textContent = '· ' + prettyDate(TODAY);
   setStatus('local');
-  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); renderGeoStats(); renderClients(); renderGeoNotes(); refreshKPI(); renderTrend(); renderNews();
+  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews();
   // 首次进入且本地无资讯时，自动拉一次默认源（同会话仅一次）
   if (navigator.onLine && news.length === 0 && !sessionStorage.getItem('stella-news-autofetch')) {
     sessionStorage.setItem('stella-news-autofetch', '1');
@@ -975,6 +890,6 @@
   window.__STELLA__ = {
     data, save, initCloud, doPush,
     setStatus,
-    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); renderGeoStats(); renderClients(); renderGeoNotes(); refreshKPI(); renderTrend(); renderNews(); }
+    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); }
   };
 })();
