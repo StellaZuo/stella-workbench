@@ -223,3 +223,30 @@ nav.tabbar .ico { font-size: 18px; }
 .news-title:visited { color: var(--muted); }
 .news-title:hover { text-decoration: underline; }
 .news-src { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* ===== 业务模块（biz.js） ===== */
+.biz-bar { position: sticky; top: 0; z-index: 15; background: var(--bg, #faf7fa); padding: 8px 0 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+.biz-tabs { display: flex; gap: 6px; flex: 1; overflow-x: auto; }
+.biz-tab { flex: 0 0 auto; padding: 6px 12px; font-size: 13px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+.biz-tab.active { background: var(--pink, #ff5c8a); color: #fff; border-color: var(--pink, #ff5c8a); font-weight: 600; }
+.biz-tools { display: flex; gap: 6px; flex: 0 0 auto; }
+.biz-subtabs { margin-bottom: 10px; }
+.kpi.warn .v { color: var(--amber, #e8a13a); }
+.li-list { display: flex; flex-direction: column; gap: 6px; }
+.li { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; line-height: 1.5; }
+.li > span { flex: 1; }
+.li button, .li .sm { flex: 0 0 auto; align-self: center; }
+.item.clickable { cursor: pointer; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
+.tbl th, .tbl td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; }
+.tbl th { background: var(--surface-2); color: var(--pink-deep); font-weight: 600; }
+.tbl td { color: var(--text); }
+.kpi.pink, .kpi.warn { margin-bottom: 0; }
+
+/* 弹层 */
+.ov { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; }
+.ov-box { background: var(--surface, #fff); width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; border-radius: 18px 18px 0 0; padding: 18px 16px calc(20px + env(safe-area-inset-bottom)); position: relative; box-shadow: 0 -8px 30px rgba(0,0,0,0.2); }
+@media (min-width: 600px) { .ov { align-items: center; } .ov-box { border-radius: 18px; } }
+.ov-close { position: absolute; top: 12px; right: 14px; font-size: 24px; line-height: 1; background: transparent; border: none; color: var(--muted); z-index: 2; }
+.ov-body h2 { font-size: 17px; margin: 0 0 14px; color: var(--pink-deep); padding-right: 30px; }
+.ov-body textarea { border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-family: inherit; font-size: 14px; resize: vertical; }
