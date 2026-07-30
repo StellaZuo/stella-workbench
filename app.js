@@ -38,6 +38,69 @@
 
   const ensure = (o, k, v) => (k in o ? o[k] : (o[k] = v));
 
+  // ---- 减脂阶段目标 ----
+  const DEFAULT_GOALS = { height: 157, startWeight: 130, shortTarget: 115, shortDate: '2026-08-20', midTarget: 105, midDate: '2026-09-30' };
+  const goals = ensure(data, 'fatlossGoals', { ...DEFAULT_GOALS });
+  function daysUntil(s) { const t = Date.parse(s + 'T00:00:00'); const d = Date.now(); const diff = Math.ceil((t - d) / 86400000); return diff; }
+  function bmi(weightJin) { const kg = weightJin / 2; const m = (goals.height || 157) / 100; return (kg / (m * m)).toFixed(1); }
+  function latestWeight() {
+    const w = data.weights || {};
+    const keys = Object.keys(w).filter(k => w[k] && w[k].weight).sort();
+    return keys.length ? parseFloat(w[keys[keys.length - 1]].weight) : (goals.startWeight || 130);
+  }
+  function fmtProgress(cur, start, target) {
+    if (target >= start) return 0;
+    const lost = start - cur;
+    const total = start - target;
+    if (total <= 0) return 0;
+    const p = Math.max(0, Math.min(100, lost / total * 100));
+    return Math.round(p);
+  }
+  function renderFatlossGoals() {
+    const cur = latestWeight();
+    const lost = +(cur - (goals.startWeight || 130)).toFixed(1);
+    const absLost = Math.abs(lost);
+    const shortDays = daysUntil(goals.shortDate);
+    const midDays = daysUntil(goals.midDate);
+    const shortProgress = fmtProgress(cur, goals.startWeight, goals.shortTarget);
+    const midProgress = fmtProgress(cur, goals.startWeight, goals.midTarget);
+    const elCur = document.getElementById('fg-current'); if (elCur) elCur.textContent = cur;
+    const elLost = document.getElementById('fg-lost'); if (elLost) elLost.textContent = (lost <= 0 ? '' : '+') + lost;
+    const elProg = document.getElementById('fg-progress'); if (elProg) elProg.textContent = shortProgress + '%';
+    const elBmi = document.getElementById('fg-bmi'); if (elBmi) elBmi.textContent = bmi(cur);
+    const elShortLabel = document.getElementById('fg-short-label'); if (elShortLabel) elShortLabel.textContent = `短期 ${goals.shortDate.slice(5)}`;
+    const elShortBar = document.getElementById('fg-short-bar'); if (elShortBar) elShortBar.style.width = shortProgress + '%';
+    const elShortVal = document.getElementById('fg-short-val'); if (elShortVal) elShortVal.textContent = goals.shortTarget + '斤';
+    const elMidLabel = document.getElementById('fg-mid-label'); if (elMidLabel) elMidLabel.textContent = `中期 ${goals.midDate.slice(5)}`;
+    const elMidBar = document.getElementById('fg-mid-bar'); if (elMidBar) elMidBar.style.width = midProgress + '%';
+    const elMidVal = document.getElementById('fg-mid-val'); if (elMidVal) elMidVal.textContent = goals.midTarget + '斤';
+    const elCd = document.getElementById('fg-countdown'); if (elCd) elCd.textContent = `短期剩 ${shortDays} 天 · 中期剩 ${midDays} 天`;
+  }
+  function openFatlossGoalsEditor() {
+    document.getElementById('fg-in-height').value = goals.height;
+    document.getElementById('fg-in-start').value = goals.startWeight;
+    document.getElementById('fg-in-short-target').value = goals.shortTarget;
+    document.getElementById('fg-in-short-date').value = goals.shortDate;
+    document.getElementById('fg-in-mid-target').value = goals.midTarget;
+    document.getElementById('fg-in-mid-date').value = goals.midDate;
+    document.getElementById('fatloss-goals-overlay').style.display = 'flex';
+  }
+  function closeFatlossGoalsEditor() { document.getElementById('fatloss-goals-overlay').style.display = 'none'; }
+  function saveFatlossGoals() {
+    goals.height = parseInt(document.getElementById('fg-in-height').value, 10) || 157;
+    goals.startWeight = parseFloat(document.getElementById('fg-in-start').value) || 130;
+    goals.shortTarget = parseFloat(document.getElementById('fg-in-short-target').value) || 115;
+    goals.shortDate = document.getElementById('fg-in-short-date').value || '2026-08-20';
+    goals.midTarget = parseFloat(document.getElementById('fg-in-mid-target').value) || 105;
+    goals.midDate = document.getElementById('fg-in-mid-date').value || '2026-09-30';
+    save(); renderFatlossGoals(); closeFatlossGoalsEditor(); flash('减脂目标已更新');
+  }
+  document.getElementById('fatloss-edit-goals').addEventListener('click', openFatlossGoalsEditor);
+  document.getElementById('fatloss-goals-close').addEventListener('click', closeFatlossGoalsEditor);
+  document.getElementById('fatloss-goals-cancel').addEventListener('click', closeFatlossGoalsEditor);
+  document.getElementById('fatloss-goals-save').addEventListener('click', saveFatlossGoals);
+  document.getElementById('fatloss-goals-overlay').addEventListener('click', e => { if (e.target.id === 'fatloss-goals-overlay') closeFatlossGoalsEditor(); });
+
   // ---- 同步元数据 ----
   function loadMeta() { try { return JSON.parse(localStorage.getItem(META_KEY)) || {}; } catch (e) { return {}; } }
   function saveMeta(m) { localStorage.setItem(META_KEY, JSON.stringify(m)); }
@@ -217,7 +280,7 @@
   document.getElementById('save-checkin').addEventListener('click', () => {
     todayCheckin.weight = weightInput.value;
     todayCheckin.water = waterInput.value;
-    save(); renderCheckinUI(); refreshKPI(); renderTrend();
+    save(); renderCheckinUI(); refreshKPI(); renderTrend(); renderFatlossGoals();
     flash('已保存今日打卡');
   });
 
@@ -916,7 +979,7 @@
   // ---- 初始化 ----
   document.getElementById('today-date').textContent = '· ' + prettyDate(TODAY);
   setStatus('local');
-  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter();
+  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); renderFatlossGoals();
   // 首次进入且本地无资讯时，自动同步里里抓取的最新中文 GEO 资讯（同会话仅一次）
   if (navigator.onLine && news.length === 0 && !sessionStorage.getItem('stella-news-autofetch')) {
     sessionStorage.setItem('stella-news-autofetch', '1');
@@ -954,6 +1017,6 @@
   window.__STELLA__ = {
     data, save, initCloud, doPush,
     setStatus,
-    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); }
+    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); renderFatlossGoals(); }
   };
 })();
