@@ -224,6 +224,13 @@ nav.tabbar .ico { font-size: 18px; }
 .news-title:hover { text-decoration: underline; }
 .news-src { font-size: 11px; color: var(--muted); margin-top: 3px; }
 
+/* 任务中心 */
+.task-badge { position: relative; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 6px 9px; font-size: 15px; cursor: pointer; line-height: 1; }
+.task-badge span { position: absolute; top: -7px; right: -7px; background: var(--pink-strong); color: #fff; font-size: 10px; min-width: 17px; height: 17px; line-height: 17px; border-radius: 9px; text-align: center; padding: 0 4px; font-weight: 700; }
+.task-card { border: 1px solid var(--pink-strong); box-shadow: 0 0 0 3px rgba(255, 92, 138, .08); }
+.task-item { align-items: flex-start; }
+.task-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+
 /* ===== 业务模块（biz.js） ===== */
 .biz-bar { position: sticky; top: 0; z-index: 15; background: var(--bg, #faf7fa); padding: 8px 0 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
 .biz-tabs { display: flex; gap: 6px; flex: 1; overflow-x: auto; }
