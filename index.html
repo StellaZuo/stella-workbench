@@ -210,6 +210,39 @@
     <!-- 生活 · 减脂健康 -->
     <section id="sec-life" class="section">
       <div class="card">
+        <h2 style="justify-content:space-between">
+          <span>📉 减脂健康管理</span>
+          <span style="display:flex;gap:8px;align-items:center">
+            <button class="sm" id="fatloss-edit-goals" style="background:var(--pink-strong);color:#fff;border:none">调整目标</button>
+          </span>
+        </h2>
+        <div id="fatloss-goals-panel">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+            <div class="kpi pink"><div class="v" id="fg-current">130</div><div class="l">当前体重(斤)</div></div>
+            <div class="kpi green"><div class="v" id="fg-lost">0</div><div class="l">已减(斤)</div></div>
+            <div class="kpi"><div class="v" id="fg-progress">0%</div><div class="l">距8/20目标</div></div>
+          </div>
+          <div class="kpi" style="margin-bottom:10px">
+            <div class="v" id="fg-bmi">0.0</div>
+            <div class="l">BMI</div>
+          </div>
+          <div class="bars">
+            <div class="bar-row">
+              <div class="bar-label" style="width:auto;flex:0 0 auto" id="fg-short-label">短期 8/20</div>
+              <div class="bar-track"><div class="bar" id="fg-short-bar" style="width:0%;background:linear-gradient(90deg,#ff8fb1,#ff5c8a)"></div></div>
+              <div class="bar-num" id="fg-short-val" style="width:auto;flex:0 0 auto;text-align:left;padding-left:8px">115斤</div>
+            </div>
+            <div class="bar-row" style="margin-top:6px">
+              <div class="bar-label" style="width:auto;flex:0 0 auto" id="fg-mid-label">中期 9/30</div>
+              <div class="bar-track"><div class="bar" id="fg-mid-bar" style="width:0%;background:linear-gradient(90deg,#7ec8c8,#4fb0b0)"></div></div>
+              <div class="bar-num" id="fg-mid-val" style="width:auto;flex:0 0 auto;text-align:left;padding-left:8px">105斤</div>
+            </div>
+          </div>
+          <p class="meta" id="fg-countdown" style="margin-top:10px;color:var(--muted)">短期剩 -- 天 · 中期剩 -- 天</p>
+        </div>
+      </div>
+
+      <div class="card">
         <h2>🌿 今日健康打卡</h2>
         <div class="row">
           <div class="field">
@@ -339,6 +372,32 @@
       <p class="meta" style="color:var(--muted);padding:4px 2px 0">里里在对话中帮你记的复盘，也会同步到这里——在「工作台」点 🔄 即可拉取。</p>
     </section>
   </main>
+
+  <!-- 调整减脂目标弹层 -->
+  <div id="fatloss-goals-overlay" class="ov" style="display:none">
+    <div class="ov-box">
+      <button class="ov-close" id="fatloss-goals-close">×</button>
+      <div class="ov-body">
+        <h2>调整减脂阶段目标</h2>
+        <div class="row">
+          <div class="field"><label>身高 (cm)</label><input id="fg-in-height" type="number" inputmode="numeric" /></div>
+          <div class="field"><label>起始体重 (斤)</label><input id="fg-in-start" type="number" inputmode="decimal" /></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div class="field"><label>短期目标体重 (斤)</label><input id="fg-in-short-target" type="number" inputmode="decimal" /></div>
+          <div class="field"><label>短期截止日</label><input id="fg-in-short-date" type="date" /></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div class="field"><label>中期目标体重 (斤)</label><input id="fg-in-mid-target" type="number" inputmode="decimal" /></div>
+          <div class="field"><label>中期截止日</label><input id="fg-in-mid-date" type="date" /></div>
+        </div>
+        <div class="btn-row" style="margin-top:16px">
+          <button class="primary" id="fatloss-goals-save">保存目标</button>
+          <button id="fatloss-goals-cancel">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <nav class="tabbar">
     <button data-sec="overview" class="active"><span class="ico">🏠</span>工作台</button>
