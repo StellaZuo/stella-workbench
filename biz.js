@@ -504,6 +504,66 @@
     if (biz.passcode) lockUI();
   }
 
+  /* ---------- 来自里里：任务中心采纳 ---------- */
+  // 把里里从对话同步来的"种子"映射到本地业务数组；完整机密只落本地，云端仅暂存种子。
+  function normList(v) {
+    if (!Array.isArray(v)) return [];
+    return v.map(x => typeof x === 'string' ? x : (x && (x.text || x.name || x)) || '');
+  }
+  function adoptSeed(seed) {
+    if (!seed || !seed.type) return { ok: false };
+    const p = seed.payload || {};
+    let tab = 'overview';
+    if (seed.type === 'client') {
+      const c = {
+        id: uid(), name: p.name || seed.title || '未命名客户',
+        status: p.status || '意向', signDate: p.signDate || '',
+        type: p.type || '', contact: p.contact || '', industry: p.industry || '',
+        stage: p.stage || '', next: p.next || '', prio: p.prio || '普通',
+        deliverables: normList(p.deliverables), schedule: normList(p.schedule),
+        nodes: normList(p.nodes), todos: normList(p.todos), questions: normList(p.questions),
+        risk: { level: p.riskLevel || '无', note: p.riskNote || '' },
+        notes: (p.notes || []).map(t => ({ date: today(), text: t })),
+        created: today()
+      };
+      biz.clients.unshift(c); tab = 'clients';
+    } else if (seed.type === 'meeting') {
+      const m = {
+        id: uid(), theme: p.theme || seed.title || '会议', time: p.time || '',
+        type: p.mtype || '客户沟通', attend: p.attend || [],
+        done: false,
+        checklist: normList(p.checklist).map(t => ({ text: t, done: false })),
+        minutes: p.minutes || '', questions: p.questions || []
+      };
+      biz.meetings.unshift(m); tab = 'meeting';
+      (p.questions || []).forEach(q => biz.freqQuestions.unshift({ q: q, from: m.theme, _mid: m.id, date: today() }));
+    } else if (seed.type === 'ppt') {
+      const key = (p.pptType === 'standard' || p.pptType === 'auxiliary') ? p.pptType : 'custom';
+      biz.ppt[key].unshift({ name: p.name || seed.title || 'PPT', ver: p.ver || '', scene: p.scene || '', src: p.src || '', reuse: false, note: '', updates: [] });
+      tab = 'ppt';
+    } else if (seed.type === 'material') {
+      const cat = (p.cat && biz.content[p.cat]) ? p.cat : 'materials';
+      if (cat === 'ideas') biz.content.ideas.unshift({ dir: p.name || seed.title || '选题', hot: p.hot || '', form: p.form || '', date: today() });
+      else if (cat === 'articles') biz.content.articles.unshift({ title: p.name || seed.title || '文案', body: p.body || '', angle: p.angle || '里里同步', date: today() });
+      else biz.content[cat].unshift({ name: p.name || seed.title || '素材', url: p.url || '' });
+      tab = 'content';
+    } else {
+      return { ok: false };
+    }
+    save();
+    return { ok: true, tab: tab };
+  }
+  function openBiz(tab) {
+    tab = tab || 'overview';
+    const tb = document.querySelector('nav.tabbar button[data-sec="geo"]');
+    if (tb) tb.click();
+    curTab = tab;
+    const bt = document.querySelector('#biz-tabs .biz-tab[data-biz="' + tab + '"]');
+    if (bt) { document.querySelectorAll('#biz-tabs .biz-tab').forEach(x => x.classList.remove('active')); bt.classList.add('active'); }
+    renderCurrent();
+  }
+  window.__BIZ__ = { adoptSeed: adoptSeed, openBiz: openBiz };
+
   /* ---------- 主渲染 ---------- */
   let curTab = 'overview';
   function renderCurrent() {
