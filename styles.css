@@ -153,6 +153,24 @@ nav.tabbar .ico { font-size: 18px; }
 .kpi.blue .v { color: var(--pink); }
 .kpi.green .v { color: var(--green); }
 
+/* 学习专区：五大赛道看板 */
+.track-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.track-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+}
+.track-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--tc, var(--pink));
+}
+.track-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; min-height: 34px; }
+.track-num { font-size: 26px; font-weight: 700; color: var(--tc, var(--pink-deep)); margin: 6px 0 2px; }
+.track-meta { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+.track-add {
+  width: 100%; padding: 7px; font-size: 12px; border-radius: 8px;
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--pink-deep); font-weight: 500;
+}
+.track-add:active { background: var(--border); }
+
 /* 云端未配置提示 */
 .banner {
   display: flex; align-items: flex-start; gap: 10px; justify-content: space-between;
@@ -161,3 +179,47 @@ nav.tabbar .ico { font-size: 18px; }
 }
 .banner code { background: rgba(0,0,0,0.06); padding: 1px 6px; border-radius: 5px; color: var(--amber); }
 .banner .x { cursor: pointer; color: var(--muted); font-size: 18px; line-height: 1; flex: 0 0 auto; }
+
+/* ---- AI 研讨窗口 ---- */
+.ai-scenes { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.ai-scenes .chip { font-size: 12px; padding: 5px 10px; }
+.chat-box {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px;
+  height: 280px; overflow-y: auto; padding: 12px; margin-bottom: 10px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.chat-welcome {
+  color: var(--muted); font-size: 13px; text-align: center; padding: 30px 10px; line-height: 1.6;
+}
+.chat-msg { display: flex; flex-direction: column; max-width: 86%; }
+.chat-msg.user { align-self: flex-end; }
+.chat-msg.assistant { align-self: flex-start; }
+.chat-bubble {
+  padding: 10px 13px; border-radius: 14px; font-size: 14px; line-height: 1.5;
+  background: #fff; border: 1px solid var(--border); color: var(--text);
+  white-space: pre-wrap; word-break: break-word;
+}
+.chat-msg.user .chat-bubble {
+  background: linear-gradient(135deg, #ff8fb1 0%, #ff5c8a 100%); color: #fff; border: none;
+}
+.chat-time { font-size: 10px; color: var(--muted); margin-top: 3px; }
+.chat-msg.user .chat-time { align-self: flex-end; }
+.chat-input-row { display: flex; gap: 8px; }
+.chat-input-row input { flex: 1; }
+.chat-input-row button { flex: 0 0 auto; }
+.key-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-top: 10px; padding: 9px 12px; border-radius: 10px;
+  background: rgba(232,161,58,0.12); border: 1px solid rgba(232,161,58,0.35);
+  color: var(--amber); font-size: 12px;
+}
+.config-panel {
+  margin-top: 10px; padding: 12px; border-radius: 12px;
+  background: var(--surface-2); border: 1px solid var(--border);
+}
+
+/* 资讯速览 */
+.news-title { color: var(--pink-deep); text-decoration: none; font-weight: 600; font-size: 14px; line-height: 1.45; }
+.news-title:visited { color: var(--muted); }
+.news-title:hover { text-decoration: underline; }
+.news-src { font-size: 11px; color: var(--muted); margin-top: 3px; }
