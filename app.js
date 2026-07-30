@@ -763,6 +763,14 @@
     try { localStorage.setItem(NEWS_CFG_KEY, JSON.stringify(newsConfig)); } catch (e) {}
   }
   function saveNewsConfig() { localStorage.setItem(NEWS_CFG_KEY, JSON.stringify(newsConfig)); }
+
+  // 保险：若本地缓存仍是旧版英文 Hacker News，自动清空并走中文 GEO
+  (function cleanLegacyEnglishNews() {
+    if (!Array.isArray(news) || !news.length) return;
+    const hasHN = news.some(n => n && (n.source || '').toLowerCase().includes('hacker news'));
+    if (hasHN) { news.length = 0; data.newsAsOf = ''; save(); }
+  })();
+
   function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
 
   function renderNews() {
