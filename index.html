@@ -129,60 +129,24 @@
       </div>
     </section>
 
-    <!-- GEO 创业业务 -->
+    <!-- GEO 创业业务（本地优先存储，见 biz.js） -->
     <section id="sec-geo" class="section">
-      <div class="card">
-        <h2>📊 业务全景 <span class="meta" style="font-size:12px;font-weight:400" id="geo-asof"></span></h2>
-        <div id="geo-overview"></div>
-        <p class="meta" style="color:var(--muted);padding:6px 2px 0">脱敏聚合 · 仅分布与计数，不含客户名。点 🔄 同步最新。</p>
+      <div class="biz-bar">
+        <div class="biz-tabs" id="biz-tabs">
+          <button class="biz-tab active" data-biz="overview">📊 业务全景</button>
+          <button class="biz-tab" data-biz="clients">💼 客户台账</button>
+          <button class="biz-tab" data-biz="content">📣 内容运维</button>
+          <button class="biz-tab" data-biz="ppt">📁 PPT物料</button>
+          <button class="biz-tab" data-biz="meeting">🎤 会议中心</button>
+        </div>
+        <div class="biz-tools">
+          <button class="sm" id="biz-export" title="导出备份到文件">导出</button>
+          <button class="sm" id="biz-import" title="从文件导入">导入</button>
+          <input type="file" id="biz-import-file" accept="application/json" style="display:none" />
+          <button class="sm" id="biz-lock" title="设置解锁密码">🔒</button>
+        </div>
       </div>
-
-      <div class="card">
-        <h2>💼 客户台账</h2>
-        <div class="row">
-          <div class="field" style="flex:2"><input id="geo-search" type="text" placeholder="搜索客户名 / 行业" /></div>
-          <div class="field"><select id="geo-filter">
-            <option value="">全部状态</option>
-            <option value="签约">签约</option>
-            <option value="已成交">已成交</option>
-            <option value="打单">打单</option>
-            <option value="商机">商机</option>
-            <option value="渠道">渠道</option>
-            <option value="业务合伙人">业务合伙人</option>
-          </select></div>
-        </div>
-        <div id="geo-list" style="margin-top:10px"></div>
-      </div>
-
-      <div class="card">
-        <h2>➕ 新增客户</h2>
-        <div class="row">
-          <div class="field" style="flex:2"><label>客户名</label><input id="geo-name" type="text" placeholder="公司 / 品牌名" /></div>
-          <div class="field"><label>状态</label><select id="geo-status">
-            <option>意向</option><option>进行中</option><option>签约</option><option>渠道</option></select></div>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <div class="field"><label>联系人</label><input id="geo-contact" type="text" placeholder="对接人" /></div>
-          <div class="field"><label>行业</label><input id="geo-industry" type="text" placeholder="如 珠宝" /></div>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <div class="field" style="flex:1"><label>下一步动作</label><input id="geo-next" type="text" placeholder="如 本周出方案" /></div>
-        </div>
-        <div class="btn-row"><button class="primary" id="add-client">添加客户</button></div>
-      </div>
-
-      <div class="card">
-        <h2>📌 GEO 动态</h2>
-        <div class="row">
-          <div class="field"><label>关联客户</label><input id="geo-note-client" type="text" placeholder="客户名 / 通用" /></div>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <div class="field" style="flex:1"><label>动态</label><input id="geo-note-content" type="text" placeholder="进展 / 会议结论 / 待推进" /></div>
-        </div>
-        <div class="btn-row"><button class="primary" id="add-geo-note">记录</button></div>
-        <div id="geo-notes-list" style="margin-top:10px"></div>
-      </div>
-      <p class="meta" style="color:var(--muted);padding:4px 2px 0">里里在对话中更新的客户进展也会同步到这里——工作台点 🔄 拉取。</p>
+      <div id="biz-root"></div>
     </section>
 
     <!-- 学习专区 -->
@@ -377,5 +341,6 @@
   </nav>
 
   <script src="./app.js"></script>
+  <script src="./biz.js"></script>
 </body>
 </html>
