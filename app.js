@@ -715,10 +715,12 @@
 
   async function fetchNews() {
     let items = [];
+    let asOf = '';
     try {
       if (newsConfig.mode === 'ai') items = await fetchNewsViaAI();
-      else if (newsConfig.base) items = await fetchNewsCustom();
-      else items = await fetchNewsDefault();
+      else if (newsConfig.mode === 'custom') items = await fetchNewsCustom();
+      else if (newsConfig.mode === 'hn') items = await fetchNewsDefault();
+      else { items = await fetchNewsGeo(); asOf = data.newsAsOf; }
     } catch (e) {
       console.warn('news fetch failed', e);
       flash('资讯拉取失败：' + e.message);
@@ -727,12 +729,21 @@
     if (items && items.length) {
       news.length = 0;
       items.forEach(it => news.push(it));
-      data.newsAsOf = new Date().toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      data.newsAsOf = asOf || new Date().toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
       save(); renderNews();
       flash('已更新 ' + items.length + ' 条资讯');
     } else {
       flash('未获取到资讯');
     }
+  }
+
+  // 里里抓取的中文 GEO 资讯：从云端 payload.news 拉取，无需浏览器跨域/API Key
+  async function fetchNewsGeo() {
+    const row = await sbGetRow();
+    const cloudNews = (row && row.payload && row.payload.news) ? row.payload.news : [];
+    if (!cloudNews.length) throw new Error('云端暂无里里抓取的 GEO 资讯');
+    data.newsAsOf = row.payload.newsAsOf || '';
+    return cloudNews;
   }
 
   // 默认免费源：Hacker News Algolia，浏览器可直接跨域调用，无需密钥
@@ -800,7 +811,7 @@
       document.getElementById('news-base').value = newsConfig.base || '';
       document.getElementById('news-key').value = newsConfig.key || '';
       document.getElementById('news-query').value = newsConfig.query || 'AI';
-      document.getElementById('news-mode').value = newsConfig.mode || 'default';
+      document.getElementById('news-mode').value = newsConfig.mode || 'geo';
     }
   });
   const newsSaveBtn = document.getElementById('news-save-config');
@@ -906,7 +917,7 @@
   document.getElementById('today-date').textContent = '· ' + prettyDate(TODAY);
   setStatus('local');
   fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter();
-  // 首次进入且本地无资讯时，自动拉一次默认源（同会话仅一次）
+  // 首次进入且本地无资讯时，自动同步里里抓取的最新中文 GEO 资讯（同会话仅一次）
   if (navigator.onLine && news.length === 0 && !sessionStorage.getItem('stella-news-autofetch')) {
     sessionStorage.setItem('stella-news-autofetch', '1');
     fetchNews().catch(() => {});
