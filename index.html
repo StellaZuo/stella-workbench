@@ -9,7 +9,7 @@
   <meta http-equiv="Expires" content="0" />
   <link rel="manifest" href="./manifest.json?v=3" />
   <link rel="apple-touch-icon" href="./icons/icon-192-v3.png" />
-  <link rel="stylesheet" href="./styles-v3.css" />
+  <link rel="stylesheet" href="./styles-v4.css" />
   <title>Stella Zuo</title>
 </head>
 <body>
@@ -42,7 +42,11 @@
       </div>
 
       <div class="card">
-        <h2>🚀 今日驾驶舱 <span id="today-date" style="font-size:12px;color:var(--muted);font-weight:400"></span></h2>
+        <h2>🚀 驾驶舱 <span id="today-date" style="font-size:12px;color:var(--muted);font-weight:400"></span>
+          <span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;color:var(--muted)">
+            日期 <input type="date" class="date-picker global-date-picker" id="dash-date-picker" />
+          </span>
+        </h2>
         <div class="row">
           <div class="field"><label>晨起体重 (斤)</label><input id="dash-weight" type="number" inputmode="decimal" placeholder="如 129" /></div>
           <div class="field"><label>饮水量 (ml)</label><input id="dash-water" type="number" inputmode="numeric" placeholder="如 2000" /></div>
@@ -65,7 +69,7 @@
         <h2>今日待办</h2>
         <div class="row">
           <div class="field" style="flex:3"><input id="dash-todo-input" type="text" placeholder="添加待办，回车保存" /></div>
-          <div class="field" style="flex:0"><button class="primary" id="dash-add-todo">添加</button></div>
+          <div class="field" style="flex:0"><button class="primary readonly-when-history" id="dash-add-todo">添加</button></div>
         </div>
         <div id="dash-todo-list" style="margin-top:8px"></div>
       </div>
@@ -78,7 +82,7 @@
           </div>
           <div class="field" style="flex:2"><label>内容</label><input id="dash-diet-content" type="text" placeholder="吃了什么" /></div>
         </div>
-        <div class="btn-row"><button class="primary" id="dash-add-diet">添加</button></div>
+        <div class="btn-row"><button class="primary readonly-when-history" id="dash-add-diet">添加</button></div>
         <div id="dash-diet-list" style="margin-top:8px"></div>
       </div>
 
@@ -168,7 +172,11 @@
       </div>
 
       <div class="card">
-        <h2>➕ 记录学习</h2>
+        <h2>➕ 记录学习 <span class="date-label" style="font-size:12px;color:var(--muted);font-weight:400"></span>
+          <span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;color:var(--muted)">
+            日期 <input type="date" class="date-picker global-date-picker" id="learn-date-picker" />
+          </span>
+        </h2>
         <div class="row">
           <div class="field"><label>赛道</label>
             <select id="learn-track">
@@ -196,7 +204,7 @@
         <div class="row" style="margin-top:8px">
           <div class="field" style="flex:1"><label>笔记 / 要点</label><textarea id="learn-note" rows="2" placeholder="核心收获、链接、待办…"></textarea></div>
         </div>
-        <div class="btn-row"><button class="primary" id="add-learn">保存记录</button></div>
+        <div class="btn-row"><button class="primary readonly-when-history" id="add-learn">保存记录</button></div>
       </div>
 
       <div class="card">
@@ -204,6 +212,7 @@
         <div class="row">
           <div class="field"><select id="learn-track-filter"><option value="">全部赛道</option><option>Agent 开发</option><option>GEO 知识与开发</option><option>项目运营经营</option><option>内心能量与情绪管理</option><option>人生智慧与长期认知</option></select></div>
           <div class="field"><select id="learn-status-filter"><option value="">全部状态</option><option>想学</option><option>进行中</option><option>已掌握</option></select></div>
+          <div class="field"><label style="margin-bottom:0">按日期</label><input type="date" class="date-picker" id="learn-list-date-filter" /></div>
         </div>
         <div id="learn-list" style="margin-top:10px"></div>
       </div>
@@ -246,7 +255,11 @@
       </div>
 
       <div class="card">
-        <h2>🌿 今日健康打卡</h2>
+        <h2>🌿 健康打卡 <span class="date-label" style="font-size:12px;color:var(--muted);font-weight:400"></span>
+          <span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;color:var(--muted)">
+            日期 <input type="date" class="date-picker global-date-picker" id="life-date-picker" />
+          </span>
+        </h2>
         <div class="row">
           <div class="field">
             <label>晨起体重 (斤)</label>
@@ -258,8 +271,8 @@
           </div>
         </div>
         <div class="btn-row">
-          <button class="chip" id="binge-toggle">记录暴食</button>
-          <button class="primary" id="save-checkin">保存今日打卡</button>
+          <button class="chip readonly-when-history" id="binge-toggle">记录暴食</button>
+          <button class="primary readonly-when-history" id="save-checkin">保存今日打卡</button>
         </div>
         <div id="binge-form" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
           <div class="row">
@@ -270,7 +283,7 @@
             <div class="field"><label>诱发情绪</label><input id="binge-mood" type="text" placeholder="如 焦虑" /></div>
             <div class="field"><label>核心诱因</label><input id="binge-cause" type="text" placeholder="如 长时间空腹" /></div>
           </div>
-          <div class="btn-row"><button class="primary sm" id="add-binge">添加暴食记录</button></div>
+          <div class="btn-row"><button class="primary sm readonly-when-history" id="add-binge">添加暴食记录</button></div>
         </div>
         <div id="binge-list" style="margin-top:10px"></div>
       </div>
@@ -281,19 +294,27 @@
       </div>
 
       <div class="card">
-        <h2>饮食记录</h2>
+        <h2>饮食记录 <span class="date-label" style="font-size:12px;color:var(--muted);font-weight:400"></span>
+          <span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;color:var(--muted)">
+            日期 <input type="date" class="date-picker global-date-picker" id="diet-date-picker" />
+          </span>
+        </h2>
         <div class="row">
           <div class="field"><label>时段</label>
             <select id="diet-meal"><option>早餐</option><option>午餐</option><option>晚餐</option><option>加餐</option><option>夜宵</option></select>
           </div>
           <div class="field" style="flex:2"><label>内容</label><input id="diet-content" type="text" placeholder="吃了什么" /></div>
         </div>
-        <div class="btn-row"><button class="primary" id="add-diet">添加</button></div>
+        <div class="btn-row"><button class="primary readonly-when-history" id="add-diet">添加</button></div>
         <div id="diet-list" style="margin-top:8px"></div>
       </div>
 
       <div class="card">
-        <h2>居家健身打卡</h2>
+        <h2>居家健身打卡 <span class="date-label" style="font-size:12px;color:var(--muted);font-weight:400"></span>
+          <span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;color:var(--muted)">
+            日期 <input type="date" class="date-picker global-date-picker" id="fitness-date-picker" />
+          </span>
+        </h2>
         <div class="row">
           <div class="field" style="flex:2"><label>训练项目 (方案库)</label>
             <select id="fitness-project">
@@ -303,16 +324,20 @@
           </div>
           <div class="field"><label>时长(分)</label><input id="fitness-min" type="number" inputmode="numeric" placeholder="30" /></div>
         </div>
-        <div class="btn-row"><button class="primary" id="add-fitness">打卡</button></div>
+        <div class="btn-row"><button class="primary readonly-when-history" id="add-fitness">打卡</button></div>
         <div id="fitness-stat" class="meta" style="margin-top:8px"></div>
         <div id="fitness-list" style="margin-top:6px"></div>
       </div>
 
       <div class="card">
-        <h2>待办 / 任务</h2>
+        <h2>待办 / 任务 <span class="date-label" style="font-size:12px;color:var(--muted);font-weight:400"></span>
+          <span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;color:var(--muted)">
+            日期 <input type="date" class="date-picker global-date-picker" id="todo-date-picker" />
+          </span>
+        </h2>
         <div class="row">
           <div class="field" style="flex:3"><input id="todo-input" type="text" placeholder="添加待办，回车保存" /></div>
-          <div class="field" style="flex:0"><button class="primary" id="add-todo">添加</button></div>
+          <div class="field" style="flex:0"><button class="primary readonly-when-history" id="add-todo">添加</button></div>
         </div>
         <div id="todo-groups" style="margin-top:10px"></div>
       </div>
@@ -345,7 +370,7 @@
             <div class="field"><label>模型</label><input id="ai-model" type="text" value="gpt-4o-mini" /></div>
           </div>
           <div class="btn-row"><button class="primary sm" id="ai-save-key">保存并关闭</button></div>
-          <p class="meta">密钥仅存在本机浏览器，不会同步到云端。</p>
+          <p class="meta">密钥仅存在本机浏览器，不会同步到云端。<br>国内可用 OpenAI 兼容 Base：硅基流动 <code>https://api.siliconflow.cn/v1</code>、DeepSeek <code>https://api.deepseek.com</code>、豆包 <code>https://ark.cn-beijing.volces.com/api/v3</code>。</p>
         </div>
       </div>
     </section>
@@ -353,7 +378,11 @@
     <!-- 复盘 -->
     <section id="sec-review" class="section">
       <div class="card">
-        <h2>📝 记录复盘</h2>
+        <h2>📝 记录复盘 <span class="date-label" style="font-size:12px;color:var(--muted);font-weight:400"></span>
+          <span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;color:var(--muted)">
+            日期 <input type="date" class="date-picker global-date-picker" id="review-date-picker" />
+          </span>
+        </h2>
         <div class="row">
           <div class="field"><label>类型</label>
             <select id="review-type">
@@ -369,7 +398,7 @@
             <textarea id="review-content" rows="3" placeholder="今天的收获、卡点、下一步…"></textarea>
           </div>
         </div>
-        <div class="btn-row"><button class="primary" id="add-review">保存复盘</button></div>
+        <div class="btn-row"><button class="primary readonly-when-history" id="add-review">保存复盘</button></div>
         <div id="review-list" style="margin-top:10px"></div>
       </div>
       <p class="meta" style="color:var(--muted);padding:4px 2px 0">里里在对话中帮你记的复盘，也会同步到这里——在「工作台」点 🔄 即可拉取。</p>
@@ -410,7 +439,7 @@
     <button data-sec="review"><span class="ico">📝</span>复盘</button>
   </nav>
 
-  <script src="./app-v3.js"></script>
+  <script src="./app-v4.js"></script>
   <script src="./biz.js"></script>
 </body>
 </html>
