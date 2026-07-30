@@ -9,7 +9,7 @@
   <meta http-equiv="Expires" content="0" />
   <link rel="manifest" href="./manifest.json?v=3" />
   <link rel="apple-touch-icon" href="./icons/icon-192-v3.png" />
-  <link rel="stylesheet" href="./styles-v5.css" />
+  <link rel="stylesheet" href="./styles-v6.css" />
   <title>Stella Zuo</title>
 </head>
 <body>
@@ -141,6 +141,64 @@
           <button class="chip" data-goto="review">📝 复盘</button>
         </div>
         <p class="empty" style="text-align:left;padding:12px 0 0">点击进入各板块详细管理；GEO 业务与学习专区将于后续阶段接入。里里在对话中帮你记的数据会出现在上方「来自里里」。</p>
+      </div>
+
+      <!-- ===== 驾驶舱 · 工作板块 ===== -->
+      <div class="card">
+        <h2>💰 理财知识</h2>
+        <div class="row" style="margin-bottom:10px">
+          <button class="chip finance-tab active" data-finance-tab="hot">今日热点</button>
+          <button class="chip finance-tab" data-finance-tab="ledger">收支台账</button>
+          <button class="chip finance-tab" data-finance-tab="learn">理财学习</button>
+        </div>
+        <div id="finance-pane-hot">
+          <div id="finance-trend" class="trend-box" style="font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px"></div>
+          <div id="finance-list"></div>
+        </div>
+        <div id="finance-pane-ledger" style="display:none">
+          <div class="row">
+            <div class="field"><label>日期</label><input type="date" id="finance-date" /></div>
+            <div class="field"><label>收入(¥)</label><input id="finance-income" type="number" placeholder="0" /></div>
+            <div class="field"><label>支出(¥)</label><input id="finance-expense" type="number" placeholder="0" /></div>
+          </div>
+          <div class="row">
+            <div class="field" style="flex:2"><label>备注</label><input id="finance-note" type="text" placeholder="工资 / 房租 / 理财收益等" /></div>
+            <div class="field" style="flex:0;display:flex;align-items:flex-end"><button class="primary sm" id="finance-add">记一笔</button></div>
+          </div>
+          <div id="finance-ledger-list" style="margin-top:10px"></div>
+        </div>
+        <div id="finance-pane-learn" style="display:none">
+          <div id="finance-learning-list"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🌍 国际政经资讯</h2>
+        <div id="macro-analysis" class="trend-box" style="font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px"></div>
+        <div id="macro-list"></div>
+      </div>
+
+      <div class="card">
+        <h2>📚 书籍阅读与交流</h2>
+        <div class="row" style="margin-bottom:10px">
+          <button class="chip book-tab active" data-book-tab="rec">每日推荐</button>
+          <button class="chip book-tab" data-book-tab="mine">我的书单</button>
+        </div>
+        <div id="book-pane-rec">
+          <div id="book-rec-list"></div>
+        </div>
+        <div id="book-pane-mine" style="display:none">
+          <div class="row">
+            <div class="field" style="flex:2"><label>书名</label><input id="book-title" type="text" placeholder="书名" /></div>
+            <div class="field"><label>作者</label><input id="book-author" type="text" placeholder="作者" /></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>状态</label><select id="book-status"><option>想读</option><option>在读</option><option>已读</option></select></div>
+            <div class="field" style="flex:2"><label>进度/读后感</label><input id="book-progress" type="text" placeholder="如 读到第3章 / 收获…" /></div>
+            <div class="field" style="flex:0;display:flex;align-items:flex-end"><button class="primary sm" id="book-add">添加</button></div>
+          </div>
+          <div id="book-mine-list" style="margin-top:10px"></div>
+        </div>
       </div>
     </section>
 
@@ -439,7 +497,7 @@
     <button data-sec="review"><span class="ico">📝</span>复盘</button>
   </nav>
 
-  <script src="./app-v5.js"></script>
+  <script src="./app-v6.js"></script>
   <script src="./biz.js"></script>
 </body>
 </html>
