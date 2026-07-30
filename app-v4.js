@@ -258,6 +258,7 @@
     b.classList.add('active');
     document.querySelectorAll('main .section').forEach(s => s.classList.remove('active'));
     document.getElementById('sec-' + b.dataset.sec).classList.add('active');
+    renderTrend(); // 切换 tab 后重绘体重趋势（隐藏画布宽度恢复为 0 时需重新绘制）
   }));
 
   // ---- 减脂：今日打卡 ----
@@ -986,13 +987,14 @@
     if (data.clients || data.geo_notes) { delete data.clients; delete data.geo_notes; save(); }
   })();
 
-  // ---- 体重趋势 ----
-  function renderTrend() {
-    const cv = document.getElementById('trend-canvas');
+  // ---- 体重趋势（驾驶舱 + 减脂区两块画布） ----
+  function drawTrendOn(cv) {
     const dpr = window.devicePixelRatio || 1;
-    const w = cv.clientWidth, h = 160;
+    const w = cv.clientWidth;
+    const h = 160;
+    if (!w) return; // 隐藏的画布（如未激活的 tab）宽度 0，跳过，等切到时再画
     cv.width = w * dpr; cv.height = h * dpr;
-    const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
     const entries = Object.keys(data.weights || {})
       .filter(k => data.weights[k].weight)
@@ -1001,15 +1003,23 @@
     if (entries.length < 1) { ctx.fillStyle = '#9a9aab'; ctx.font = '13px sans-serif'; ctx.fillText('录入体重后显示趋势', 12, h / 2); return; }
     const vals = entries.map(e => e.v);
     const min = Math.min(...vals) - 1, max = Math.max(...vals) + 1;
-    const px = i => entries.length === 1 ? w / 2 : 30 + i * (w - 60) / (entries.length - 1);
-    const py = v => h - 20 - (v - min) / (max - min) * (h - 40);
+    const pad = 30, right = w - 16;
+    const px = i => entries.length === 1 ? w / 2 : pad + i * (right - pad) / (entries.length - 1);
+    const py = v => h - 22 - (v - min) / (max - min) * (h - 42);
     ctx.strokeStyle = '#ff5c8a'; ctx.lineWidth = 2; ctx.beginPath();
     entries.forEach((e, i) => { const x = px(i), y = py(e.v); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
     ctx.stroke();
     ctx.fillStyle = '#ff5c8a';
     entries.forEach((e, i) => { ctx.beginPath(); ctx.arc(px(i), py(e.v), 3.5, 0, 7); ctx.fill(); });
-    ctx.fillStyle = '#9a9aab'; ctx.font = '10px sans-serif';
-    entries.forEach((e, i) => { if (i % Math.ceil(entries.length / 6) === 0) ctx.fillText(e.k.slice(5), px(i) - 12, h - 6); });
+    // 数据点数值标签
+    ctx.fillStyle = '#ff5c8a'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    entries.forEach((e, i) => { ctx.fillText(e.v, px(i), py(e.v) - 8); });
+    ctx.fillStyle = '#9a9aab'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    entries.forEach((e, i) => { if (i % Math.ceil(entries.length / 6) === 0) ctx.fillText(e.k.slice(5), px(i), h - 6); });
+    ctx.textAlign = 'start';
+  }
+  function renderTrend() {
+    document.querySelectorAll('.trend-canvas').forEach(drawTrendOn);
   }
 
   // ---- 本月统计（驾驶舱） ----
