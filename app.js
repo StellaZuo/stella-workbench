@@ -407,6 +407,8 @@
 
   // ---- 来自里里（对话中帮你记的数据收件箱） ----
   const inbox = ensure(data, '_inbox', []);
+  // ---- 任务中心（里里从对话同步的业务种子，云端 biz_inbox，采纳后落地本地业务模块） ----
+  const bizInbox = ensure(data, 'biz_inbox', []);
   function renderInbox() {
     const box = document.getElementById('inbox-list');
     if (!box) return;
@@ -418,6 +420,52 @@
     ).join('');
     box.querySelectorAll('.del').forEach(d => d.onclick = () => {
       const i = inbox.findIndex(x => x.id == d.dataset.id); inbox.splice(i, 1); save(); renderInbox();
+    });
+  }
+
+  // ---- 任务中心（里里同步来的业务待办） ----
+  function renderTaskCenter() {
+    const card = document.getElementById('task-center');
+    if (!card) return;
+    const box = document.getElementById('task-list');
+    const badge = document.getElementById('task-count');
+    const list = (data.biz_inbox || []).filter(s => !s.adopted);
+    if (badge) badge.textContent = list.length;
+    if (!list.length) {
+      box.innerHTML = '<div class="empty">暂无待办 · 里里在对话里帮你记的会议 / PPT / 客户 / 公众号素材会出现在这里</div>';
+      return;
+    }
+    const icons = { client: '💼', meeting: '🎤', ppt: '📁', material: '📣' };
+    const labels = { client: '客户', meeting: '会议', ppt: 'PPT', material: '素材' };
+    box.innerHTML = list.slice(0, 12).map(s =>
+      `<div class="item task-item" data-id="${s.id}">
+        <div class="body">
+          <div><span class="tag">${icons[s.type] || '📌'} ${labels[s.type] || '任务'}</span><b>${escapeHtml(s.title || '(无标题)')}</b></div>
+          <div class="meta">${escapeHtml(s.summary || '')}${s.created ? ' · ' + escapeHtml(s.created) : ''}</div>
+        </div>
+        <div class="task-actions">
+          <button class="sm primary" data-act="adopt" data-id="${s.id}">采纳</button>
+          <button class="sm" data-act="ignore" data-id="${s.id}">忽略</button>
+        </div>
+      </div>`).join('');
+    box.querySelectorAll('[data-act]').forEach(b => b.onclick = () => {
+      const id = b.dataset.id, act = b.dataset.act;
+      const i = (data.biz_inbox || []).findIndex(x => String(x.id) === String(id));
+      if (i < 0) return;
+      if (act === 'adopt') {
+        const seed = data.biz_inbox[i];
+        const res = (window.__BIZ__ && window.__BIZ__.adoptSeed) ? window.__BIZ__.adoptSeed(seed) : { ok: false };
+        if (res.ok) {
+          data.biz_inbox.splice(i, 1); save(); renderTaskCenter();
+          const nameMap = { clients: '客户台账', meeting: '会议中心', ppt: 'PPT物料', content: '内容运维' };
+          flash('已采纳 → 落入业务模块「' + (nameMap[res.tab] || '业务') + '」');
+          if (res.tab) setTimeout(() => { if (window.__BIZ__) window.__BIZ__.openBiz(res.tab); }, 350);
+          return;
+        }
+        flash('采纳失败：业务模块未就绪，请刷新重试');
+      } else {
+        data.biz_inbox.splice(i, 1); save(); renderTaskCenter(); flash('已忽略');
+      }
     });
   }
 
@@ -771,6 +819,11 @@
 
   // ---- 手动拉取云端（里里写入的最新数据） ----
   document.getElementById('sync-btn').addEventListener('click', pullUpdates);
+  const taskBadge = document.getElementById('task-badge');
+  if (taskBadge) taskBadge.addEventListener('click', () => {
+    const ov = document.querySelector('nav.tabbar button[data-sec="overview"]'); if (ov) ov.click();
+    setTimeout(() => { const c = document.getElementById('task-center'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+  });
   async function pullUpdates() {
     if (!navigator.onLine) { setStatus('offline'); return; }
     try {
@@ -852,7 +905,7 @@
   // ---- 初始化 ----
   document.getElementById('today-date').textContent = '· ' + prettyDate(TODAY);
   setStatus('local');
-  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews();
+  fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter();
   // 首次进入且本地无资讯时，自动拉一次默认源（同会话仅一次）
   if (navigator.onLine && news.length === 0 && !sessionStorage.getItem('stella-news-autofetch')) {
     sessionStorage.setItem('stella-news-autofetch', '1');
@@ -890,6 +943,6 @@
   window.__STELLA__ = {
     data, save, initCloud, doPush,
     setStatus,
-    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); }
+    renderAll: () => { fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); }
   };
 })();
