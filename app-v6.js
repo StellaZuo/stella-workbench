@@ -839,10 +839,10 @@
   function renderFinance() {
     const list = document.getElementById('finance-list');
     const trend = document.getElementById('finance-trend');
-    if (trend) trend.textContent = financeNews.trend || '暂无市场趋势简析，点 🔄 同步拉取最新热点。';
+    if (trend) trend.textContent = financeNews.trend || '暂无市场趋势简析，点 🔄 拉取最新理财热点。';
     if (list) {
       const items = financeNews.items || [];
-      if (!items.length) list.innerHTML = '<div class="empty">暂无理财热点，点顶部 🔄 同步拉取</div>';
+      if (!items.length) list.innerHTML = '<div class="empty">暂无理财热点，点 🔄 拉取最新</div>';
       else {
         list.innerHTML = items.map(n =>
           `<div class="item"><div class="body">` +
@@ -898,10 +898,10 @@
   function renderMacro() {
     const list = document.getElementById('macro-list');
     const analysis = document.getElementById('macro-analysis');
-    if (analysis) analysis.textContent = macroNews.analysis || '暂无趋势分析，点顶部 🔄 同步拉取最新资讯。';
+    if (analysis) analysis.textContent = macroNews.analysis || '暂无趋势分析，点 🔄 拉取最新国际政经资讯。';
     if (list) {
       const items = macroNews.items || [];
-      if (!items.length) list.innerHTML = '<div class="empty">暂无国际政经资讯，点顶部 🔄 同步拉取</div>';
+      if (!items.length) list.innerHTML = '<div class="empty">暂无国际政经资讯，点 🔄 拉取最新</div>';
       else {
         list.innerHTML = items.map(n =>
           `<div class="item"><div class="body">` +
@@ -919,7 +919,7 @@
     const recList = document.getElementById('book-rec-list');
     if (recList) {
       const items = bookRecs.items || [];
-      if (!items.length) recList.innerHTML = '<div class="empty">暂无书籍推荐，点顶部 🔄 同步拉取</div>';
+      if (!items.length) recList.innerHTML = '<div class="empty">暂无书籍推荐，点 🔄 拉取最新</div>';
       else {
         recList.innerHTML = items.map(b =>
           `<div class="item"><div class="body">` +
@@ -1031,6 +1031,38 @@
     return cloudNews;
   }
 
+  // 理财/政经/书籍：从云端拉取里里推送的最新内容（无需 API Key）
+  async function fetchFinance() {
+    try {
+      const row = await sbGetRow();
+      const cloud = row && row.payload && row.payload.financeNews;
+      if (!cloud) throw new Error('云端暂无理财热点');
+      Object.assign(financeNews, cloud);
+      save(); renderFinance();
+      flash('已拉取最新理财热点 ' + ((financeNews.items || []).length) + ' 条');
+    } catch (e) { console.warn(e); flash('理财热点拉取失败：' + e.message); }
+  }
+  async function fetchMacro() {
+    try {
+      const row = await sbGetRow();
+      const cloud = row && row.payload && row.payload.macroNews;
+      if (!cloud) throw new Error('云端暂无国际政经资讯');
+      Object.assign(macroNews, cloud);
+      save(); renderMacro();
+      flash('已拉取最新国际政经资讯 ' + ((macroNews.items || []).length) + ' 条');
+    } catch (e) { console.warn(e); flash('国际政经资讯拉取失败：' + e.message); }
+  }
+  async function fetchBooks() {
+    try {
+      const row = await sbGetRow();
+      const cloud = row && row.payload && row.payload.bookRecs;
+      if (!cloud) throw new Error('云端暂无书籍推荐');
+      Object.assign(bookRecs, cloud);
+      save(); renderBooks();
+      flash('已拉取最新书籍推荐 ' + ((bookRecs.items || []).length) + ' 本');
+    } catch (e) { console.warn(e); flash('书籍推荐拉取失败：' + e.message); }
+  }
+
   // 默认免费源：Hacker News Algolia，浏览器可直接跨域调用，无需密钥
   async function fetchNewsDefault() {
     const q = encodeURIComponent(newsConfig.query || 'AI');
@@ -1086,6 +1118,12 @@
 
   const newsRefresh = document.getElementById('news-refresh');
   if (newsRefresh) newsRefresh.addEventListener('click', fetchNews);
+  const financeRefresh = document.getElementById('finance-refresh');
+  if (financeRefresh) financeRefresh.addEventListener('click', fetchFinance);
+  const macroRefresh = document.getElementById('macro-refresh');
+  if (macroRefresh) macroRefresh.addEventListener('click', fetchMacro);
+  const bookRefresh = document.getElementById('book-refresh');
+  if (bookRefresh) bookRefresh.addEventListener('click', fetchBooks);
   const newsKeyBar = document.getElementById('news-key-bar');
   const newsCfgPanel = document.getElementById('news-config-panel');
   const newsCfgBtn = document.getElementById('news-config-btn');
