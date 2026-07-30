@@ -9,7 +9,7 @@
   <meta http-equiv="Expires" content="0" />
   <link rel="manifest" href="./manifest.json?v=3" />
   <link rel="apple-touch-icon" href="./icons/icon-192-v3.png" />
-  <link rel="stylesheet" href="./styles-v6.css" />
+  <link rel="stylesheet" href="./styles-v7.css" />
   <title>Stella Zuo</title>
 </head>
 <body>
@@ -132,18 +132,7 @@
         </div>
       </div>
 
-      <div class="card">
-        <h2>四大板块</h2>
-        <div class="row">
-          <button class="chip" data-goto="geo">💼 GEO 创业业务</button>
-          <button class="chip" data-goto="study">📚 学习成长</button>
-          <button class="chip" data-goto="life">🌿 减脂健康</button>
-          <button class="chip" data-goto="review">📝 复盘</button>
-        </div>
-        <p class="empty" style="text-align:left;padding:12px 0 0">点击进入各板块详细管理；GEO 业务与学习专区将于后续阶段接入。里里在对话中帮你记的数据会出现在上方「来自里里」。</p>
-      </div>
-
-      <!-- ===== 驾驶舱 · 工作板块 ===== -->
+      <!-- ===== 驾驶舱 · 工作板块（资讯获取区，置于 GEO 行业资讯下方） ===== -->
       <div class="card">
         <h2>💰 理财知识</h2>
         <div class="row" style="margin-bottom:10px">
@@ -154,6 +143,7 @@
         <div id="finance-pane-hot">
           <div id="finance-trend" class="trend-box" style="font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px"></div>
           <div id="finance-list"></div>
+          <div class="btn-row" style="margin-top:10px"><button class="primary sm" id="finance-refresh">🔄 拉取最新</button></div>
         </div>
         <div id="finance-pane-ledger" style="display:none">
           <div class="row">
@@ -176,6 +166,7 @@
         <h2>🌍 国际政经资讯</h2>
         <div id="macro-analysis" class="trend-box" style="font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px"></div>
         <div id="macro-list"></div>
+        <div class="btn-row" style="margin-top:10px"><button class="primary sm" id="macro-refresh">🔄 拉取最新</button></div>
       </div>
 
       <div class="card">
@@ -186,6 +177,7 @@
         </div>
         <div id="book-pane-rec">
           <div id="book-rec-list"></div>
+          <div class="btn-row" style="margin-top:10px"><button class="primary sm" id="book-refresh">🔄 拉取最新</button></div>
         </div>
         <div id="book-pane-mine" style="display:none">
           <div class="row">
@@ -199,6 +191,17 @@
           </div>
           <div id="book-mine-list" style="margin-top:10px"></div>
         </div>
+      </div>
+
+      <div class="card">
+        <h2>四大板块</h2>
+        <div class="row">
+          <button class="chip" data-goto="geo">💼 GEO 创业业务</button>
+          <button class="chip" data-goto="study">📚 学习成长</button>
+          <button class="chip" data-goto="life">🌿 减脂健康</button>
+          <button class="chip" data-goto="review">📝 复盘</button>
+        </div>
+        <p class="empty" style="text-align:left;padding:12px 0 0">点击进入各板块详细管理；GEO 业务与学习专区将于后续阶段接入。里里在对话中帮你记的数据会出现在上方「来自里里」。</p>
       </div>
     </section>
 
@@ -497,7 +500,7 @@
     <button data-sec="review"><span class="ico">📝</span>复盘</button>
   </nav>
 
-  <script src="./app-v6.js"></script>
+  <script src="./app-v7.js"></script>
   <script src="./biz.js"></script>
 </body>
 </html>
