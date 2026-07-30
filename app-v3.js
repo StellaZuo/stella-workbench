@@ -18,10 +18,37 @@
     return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
   }
   const TODAY = ymd();
+  let selectedDate = TODAY;
 
   function prettyDate(s) {
     const [y, m, d] = s.split('-').map(Number);
     return `${m}月${d}日 周${WEEK[new Date(y, m - 1, d).getDay()]}`;
+  }
+  function isFutureDate(s) {
+    return s > TODAY;
+  }
+  function setSelectedDate(d) {
+    selectedDate = d;
+    document.querySelectorAll('.date-picker').forEach(el => { if (el.value !== d) el.value = d; });
+    document.querySelectorAll('.date-label').forEach(el => el.textContent = prettyDate(d));
+    fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderLearns(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); renderFatlossGoals(); renderChat();
+    updateReadonlyState();
+  }
+  function updateReadonlyState() {
+    const isToday = selectedDate === TODAY;
+    document.body.classList.toggle('viewing-history', !isToday);
+    document.querySelectorAll('.readonly-when-history').forEach(el => {
+      el.disabled = !isToday;
+      el.title = isToday ? '' : '切回今天才能编辑哦';
+    });
+    // 历史日期下禁用所有表单输入（配置面板和日期选择器除外）
+    document.querySelectorAll('input:not(.date-picker):not([type="checkbox"]):not([type="radio"]), select:not(.date-picker), textarea').forEach(el => {
+      if (!el.closest('.config-panel') && !el.closest('#fatloss-goals-overlay')) el.disabled = !isToday;
+    });
+  }
+  function currentCheckin() {
+    const w = ensure(data, 'weights', {});
+    return w[selectedDate] || (w[selectedDate] = { weight: '', water: '', binge: [], mood: '' });
   }
 
   // ---- 存储 ----
@@ -240,14 +267,15 @@
   const dashWater = document.getElementById('dash-water');
   const dashBinge = document.getElementById('dash-binge');
   const dashMood = document.getElementById('dash-mood');
-  const todayCheckin = ensure(data, 'weights', {})[TODAY] || (data.weights[TODAY] = { weight: '', water: '', binge: [], mood: '' });
+  // 今日打卡对象（初始化占位，实际渲染随 selectedDate 变化）
+  ensure(data, 'weights', {})[TODAY] = ensure(data, 'weights', {})[TODAY] || { weight: '', water: '', binge: [], mood: '' };
 
   // 把今日打卡回填到所有输入控件（生活 tab + 驾驶舱），保持双向同步
   function renderCheckinUI() {
-    const w = todayCheckin.weight || '';
-    const wa = todayCheckin.water || '';
-    const mo = todayCheckin.mood || '';
-    const bi = (todayCheckin.binge && todayCheckin.binge.length) ? 'yes' : 'no';
+    const w = currentCheckin().weight || '';
+    const wa = currentCheckin().water || '';
+    const mo = currentCheckin().mood || '';
+    const bi = (currentCheckin().binge && currentCheckin().binge.length) ? 'yes' : 'no';
     if (weightInput) weightInput.value = w;
     if (waterInput) waterInput.value = wa;
     if (dashWeight) dashWeight.value = w;
@@ -257,14 +285,14 @@
     renderBinges();
   }
   function setCheckinField(field, val) {
-    if (field === 'weight') todayCheckin.weight = val;
-    else if (field === 'water') todayCheckin.water = val;
-    else if (field === 'mood') todayCheckin.mood = val;
+    if (field === 'weight') currentCheckin().weight = val;
+    else if (field === 'water') currentCheckin().water = val;
+    else if (field === 'mood') currentCheckin().mood = val;
     else if (field === 'binge') {
-      if (val === 'yes' && !(todayCheckin.binge && todayCheckin.binge.length)) {
-        (todayCheckin.binge = todayCheckin.binge || []).push({ time: '', food: '暴食(驾驶舱标记)', mood: '', cause: '' });
+      if (val === 'yes' && !(currentCheckin().binge && currentCheckin().binge.length)) {
+        (currentCheckin().binge = currentCheckin().binge || []).push({ time: '', food: '暴食(驾驶舱标记)', mood: '', cause: '' });
       } else if (val === 'no') {
-        todayCheckin.binge = [];
+        currentCheckin().binge = [];
       }
     }
     save(); renderCheckinUI(); refreshKPI(); renderTrend();
@@ -278,8 +306,8 @@
   function fillCheckin() { renderCheckinUI(); }
 
   document.getElementById('save-checkin').addEventListener('click', () => {
-    todayCheckin.weight = weightInput.value;
-    todayCheckin.water = waterInput.value;
+    currentCheckin().weight = weightInput.value;
+    currentCheckin().water = waterInput.value;
     save(); renderCheckinUI(); refreshKPI(); renderTrend(); renderFatlossGoals();
     flash('已保存今日打卡');
   });
@@ -297,7 +325,7 @@
       cause: document.getElementById('binge-cause').value.trim()
     };
     if (!b.food && !b.time) return flash('至少填时间或食物');
-    (todayCheckin.binge = todayCheckin.binge || []).push(b);
+    (currentCheckin().binge = currentCheckin().binge || []).push(b);
     save(); renderBinges();
     document.getElementById('binge-time').value = '';
     document.getElementById('binge-food').value = '';
@@ -306,7 +334,7 @@
   });
   function renderBinges() {
     const box = document.getElementById('binge-list');
-    const arr = todayCheckin.binge || [];
+    const arr = currentCheckin().binge || [];
     if (!arr.length) { box.innerHTML = ''; return; }
     box.innerHTML = arr.map((b, i) =>
       `<div class="item"><div class="body"><div>${b.food || '暴食'} ${b.time ? '· ' + b.time : ''}</div>` +
@@ -320,17 +348,17 @@
 
   // ---- 饮食 ----
   const diets = ensure(data, 'diets', {});
-  diets[TODAY] = diets[TODAY] || [];
+  diets[selectedDate] = diets[selectedDate] || [];
   document.getElementById('add-diet').addEventListener('click', () => {
     const c = document.getElementById('diet-content').value.trim();
     if (!c) return;
-    diets[TODAY].push({ meal: document.getElementById('diet-meal').value, content: c });
+    diets[selectedDate].push({ meal: document.getElementById('diet-meal').value, content: c });
     document.getElementById('diet-content').value = '';
     save(); renderDiets(); renderDashDiets();
   });
   function renderDiets() {
     const box = document.getElementById('diet-list');
-    const arr = diets[TODAY];
+    const arr = diets[selectedDate];
     if (!arr.length) { box.innerHTML = '<div class="empty">今天还没有饮食记录</div>'; return; }
     box.innerHTML = arr.map((d, i) =>
       `<div class="item"><div class="body"><div><b>${d.meal}</b> ${escapeHtml(d.content)}</div></div>` +
@@ -343,7 +371,7 @@
   function renderDashDiets() {
     const box = document.getElementById('dash-diet-list');
     if (!box) return;
-    const arr = diets[TODAY];
+    const arr = diets[selectedDate];
     if (!arr.length) { box.innerHTML = '<div class="empty">今天还没吃</div>'; return; }
     box.innerHTML = arr.map((d, i) =>
       `<div class="item"><div class="body"><div><b>${d.meal}</b> ${escapeHtml(d.content)}</div></div>` +
@@ -356,18 +384,18 @@
 
   // ---- 健身 ----
   const fitness = ensure(data, 'fitness', {});
-  fitness[TODAY] = fitness[TODAY] || [];
+  fitness[selectedDate] = fitness[selectedDate] || [];
   document.getElementById('add-fitness').addEventListener('click', () => {
     const p = document.getElementById('fitness-project').value;
     const m = parseInt(document.getElementById('fitness-min').value, 10);
     if (!m || m <= 0) return flash('填训练时长');
-    fitness[TODAY].push({ project: p, min: m });
+    fitness[selectedDate].push({ project: p, min: m });
     document.getElementById('fitness-min').value = '';
     save(); renderFitness();
   });
   function monthKey() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1); }
   function renderFitness() {
-    const arr = fitness[TODAY];
+    const arr = fitness[selectedDate];
     const box = document.getElementById('fitness-list');
     const stat = document.getElementById('fitness-stat');
     // 本月统计
@@ -393,21 +421,21 @@
   function addTodo() {
     const t = document.getElementById('todo-input').value.trim();
     if (!t) return;
-    todos.unshift({ id: Date.now(), text: t, done: false, date: TODAY });
+    todos.unshift({ id: Date.now(), text: t, done: false, date: selectedDate });
     document.getElementById('todo-input').value = '';
     save(); renderTodos(); renderDashTodos(); refreshKPI();
   }
   function addTodoFromDash() {
     const t = document.getElementById('dash-todo-input').value.trim();
     if (!t) return;
-    todos.unshift({ id: Date.now(), text: t, done: false, date: TODAY });
+    todos.unshift({ id: Date.now(), text: t, done: false, date: selectedDate });
     document.getElementById('dash-todo-input').value = '';
     save(); renderTodos(); renderDashTodos(); refreshKPI();
   }
   function renderDashTodos() {
     const box = document.getElementById('dash-todo-list');
     if (!box) return;
-    const arr = todos.filter(t => t.date === TODAY);
+    const arr = todos.filter(t => t.date === selectedDate);
     if (!arr.length) { box.innerHTML = '<div class="empty">今天还没有待办</div>'; return; }
     box.innerHTML = arr.map(t =>
       `<div class="item ${t.done ? 'done' : ''}"><div class="check ${t.done ? 'done' : ''}" data-id="${t.id}">${t.done ? '✓' : ''}</div>` +
@@ -450,7 +478,7 @@
   document.getElementById('add-review').addEventListener('click', () => {
     const content = document.getElementById('review-content').value.trim();
     if (!content) return flash('写点内容吧');
-    reviews.unshift({ id: Date.now(), date: TODAY, type: document.getElementById('review-type').value, content, source: 'app' });
+    reviews.unshift({ id: Date.now(), date: selectedDate, type: document.getElementById('review-type').value, content, source: 'app' });
     document.getElementById('review-content').value = '';
     save(); renderReviews();
   });
@@ -589,7 +617,7 @@
       title,
       status: document.getElementById('learn-status').value,
       note: document.getElementById('learn-note').value.trim(),
-      date: TODAY,
+      date: selectedDate,
       source: 'app'
     });
     document.getElementById('learn-title').value = '';
@@ -627,19 +655,19 @@
   function aiContext() {
     const w = data.weights || {};
     const recentWeights = Object.keys(w).filter(k => w[k].weight).sort().slice(-7).map(k => `${k}: ${w[k].weight}斤`);
-    const todayBinge = (todayCheckin.binge || []).map(b => `${b.time || ''} ${b.food || ''} 情绪:${b.mood || '—'} 诱因:${b.cause || '—'}`).join('；');
-    const todayDiet = (diets[TODAY] || []).map(d => `${d.meal} ${d.content}`).join('；');
-    const todayFitness = (fitness[TODAY] || []).map(f => `${f.project} ${f.min}分钟`).join('；');
+    const todayBinge = (currentCheckin().binge || []).map(b => `${b.time || ''} ${b.food || ''} 情绪:${b.mood || '—'} 诱因:${b.cause || '—'}`).join('；');
+    const todayDiet = (diets[selectedDate] || []).map(d => `${d.meal} ${d.content}`).join('；');
+    const todayFitness = (fitness[selectedDate] || []).map(f => `${f.project} ${f.min}分钟`).join('；');
     let monthCnt = 0, monthMins = 0;
     Object.keys(fitness).forEach(k => { if (k.startsWith(monthKey())) fitness[k].forEach(f => { monthCnt++; monthMins += f.min; }); });
-    const undoneTodos = todos.filter(t => !t.done && t.date === TODAY).map(t => t.text).join('；');
+    const undoneTodos = todos.filter(t => !t.done && t.date === selectedDate).map(t => t.text).join('；');
     const recentLearns = learns.slice(0, 5).map(l => `[${l.track}] ${l.status} ${l.title}`).join('；');
     const geo = data.geo_stats ? `活跃客户${data.geo_stats.total || 0}，已落地${data.geo_stats.landed || 0}，推进中${data.geo_stats.pipeline || 0}` : '暂无聚合数据';
     return [
       '你是里里，左星的数字搭档。请基于以下 Stella 工作台数据，用简洁、有主见、温暖的语气回答问题。不要过度寒暄，直接给 actionable 建议。',
       '',
       '【今日减脂打卡】',
-      `体重：${todayCheckin.weight || '未记录'}斤 · 饮水：${todayCheckin.water || '未记录'}ml · 心情：${todayCheckin.mood || '未记录'} · 暴食：${todayBinge || '无'}`,
+      `体重：${currentCheckin().weight || '未记录'}斤 · 饮水：${currentCheckin().water || '未记录'}ml · 心情：${currentCheckin().mood || '未记录'} · 暴食：${todayBinge || '无'}`,
       '',
       '【最近体重趋势】',
       recentWeights.join('；') || '暂无',
@@ -703,7 +731,13 @@
       if (!reply) throw new Error('空回复');
       chatHistory[idx].content = reply;
     } catch (e) {
-      chatHistory[idx].content = '调用失败：' + e.message + '。请检查 API Base、Key 和网络（浏览器跨域策略可能限制直接调用某些接口）。';
+      let hint = '请检查 API Base、Key 和网络。';
+      if (e.message && e.message.includes('Failed to fetch')) {
+        hint = '请求发不出去，通常是网络或跨域问题。';
+        if (aiConfig.base.includes('openai.com')) hint += ' 你配的是 OpenAI 官方地址，在中国大陆可能直接连不上；建议换成硅基流动、DeepSeek、豆包等支持 CORS 的国内兼容接口。';
+        else hint += ' 可尝试在配置面板换成支持浏览器跨域（CORS）的接口 Base。';
+      }
+      chatHistory[idx].content = '调用失败：' + e.message + '。' + hint;
     }
     save(); renderChat();
   }
@@ -989,8 +1023,18 @@
     setTimeout(() => el.remove(), 1400);
   }
 
+  // ---- 日期选择器 ----
+  function bindDatePickers() {
+    document.querySelectorAll('.date-picker').forEach(el => {
+      el.value = selectedDate;
+      el.max = TODAY;
+      el.addEventListener('change', () => { if (el.value) setSelectedDate(el.value); });
+    });
+  }
+
   // ---- 初始化 ----
-  document.getElementById('today-date').textContent = '· ' + prettyDate(TODAY);
+  bindDatePickers();
+  document.getElementById('today-date').textContent = '· ' + prettyDate(selectedDate);
   setStatus('local');
   fillCheckin(); renderDiets(); renderFitness(); renderTodos(); renderDashTodos(); renderDashDiets(); renderReviews(); renderInbox(); renderLearnTracks(); renderLearns(); renderChat(); refreshKPI(); renderTrend(); renderNews(); renderTaskCenter(); renderFatlossGoals();
   // 首次进入且本地无资讯时，自动同步里里抓取的最新中文 GEO 资讯（同会话仅一次）
@@ -1006,7 +1050,7 @@
   document.getElementById('dash-add-diet').addEventListener('click', () => {
     const c = document.getElementById('dash-diet-content').value.trim();
     if (!c) return;
-    diets[TODAY].push({ meal: document.getElementById('dash-diet-meal').value, content: c });
+    diets[selectedDate].push({ meal: document.getElementById('dash-diet-meal').value, content: c });
     document.getElementById('dash-diet-content').value = '';
     save(); renderDiets(); renderDashDiets();
   });
