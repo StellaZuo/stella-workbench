@@ -1,9 +1,9 @@
-const CACHE = 'stella-v13';
-const SHELL_SUFFIX = ['/', '/index.html', '/app-v12.js', '/styles-v10.css', '/manifest.json'];
+const CACHE = 'stella-v14';
+const SHELL_SUFFIX = ['/', '/index.html', '/app-v13.js', '/styles-v10.css', '/manifest.json'];
 const ASSETS = [
   './',
   './index.html',
-  './app-v12.js',
+  './app-v13.js',
   './styles-v10.css',
   './manifest.json',
   './icons/icon-192-v3.png',
