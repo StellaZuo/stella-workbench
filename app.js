@@ -161,15 +161,20 @@
     const dateArrayMaps = ['diets', 'fitness', 'weights'];
     for (const k of keys) {
       if (dateArrayMaps.includes(k)) {
-        res[k] = {};
-        const lm = local[k] || {};
-        const sm = server[k] || {};
-        const dates = new Set([...Object.keys(lm), ...Object.keys(sm)]);
-        for (const d of dates) {
-          const la = Array.isArray(lm[d]) ? lm[d] : [];
-          const sa = Array.isArray(sm[d]) ? sm[d] : [];
-          // 云端该日期非空则优先采用；否则保留本地；都没有则为空数组
-          res[k][d] = sa.length ? sa.slice() : (la.length ? la.slice() : []);
+        if (k === 'weights' && server['weights'] && !Array.isArray(server['weights'])) {
+          // 云端 weights 为正确对象结构 → 保留，不强制转数组（解决体重记录丢失）
+          res[k] = server['weights'];
+        } else {
+          res[k] = {};
+          const lm = local[k] || {};
+          const sm = server[k] || {};
+          const dates = new Set([...Object.keys(lm), ...Object.keys(sm)]);
+          for (const d of dates) {
+            const la = Array.isArray(lm[d]) ? lm[d] : [];
+            const sa = Array.isArray(sm[d]) ? sm[d] : [];
+            // 云端该日期非空则优先采用；否则保留本地；都没有则为空数组
+            res[k][d] = sa.length ? sa.slice() : (la.length ? la.slice() : []);
+          }
         }
       } else if (k === 'todos' || k === '_inbox' || k === 'biz_inbox' || k === 'reviews' || k === 'learns' || k === 'news') {
         const la = Array.isArray(local[k]) ? local[k] : [];
