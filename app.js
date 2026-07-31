@@ -952,19 +952,13 @@
     try {
       const row = await sbGetRow();
       if (!row) return flash('云端暂无数据');
-      const meta = loadMeta();
-      const syncedAt = meta.syncedAt ? Date.parse(meta.syncedAt) : 0;
-      const localMod = meta.localModified ? Date.parse(meta.localModified) : 0;
-      const remoteTs = row.updated_at ? Date.parse(row.updated_at) : 0;
-      if (remoteTs > syncedAt && remoteTs >= localMod) {
-        localStorage.setItem(DB_KEY, JSON.stringify(row.payload || {}));
-        saveMeta({ syncedAt: row.updated_at, localModified: row.updated_at, device: row.device });
-        setStatus('online');
-        flash('已拉取里里的最新记录，刷新中…');
-        setTimeout(() => location.reload(), 700);
-      } else {
-        flash('已是最新');
-      }
+      // 用户主动点 🔄：始终以云端为准合并到本地，避免时间戳 stale 导致里里写入的数据进不来
+      data = mergePayloads(data, row.payload || {});
+      localStorage.setItem(DB_KEY, JSON.stringify(data));
+      saveMeta({ syncedAt: row.updated_at, localModified: row.updated_at, device: row.device });
+      setStatus('online');
+      flash('已拉取里里的最新记录，刷新中…');
+      setTimeout(() => location.reload(), 700);
     } catch (e) { console.warn('pull 失败', e); flash('同步失败，稍后再试'); }
   }
 
