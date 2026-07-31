@@ -1,5 +1,5 @@
-const CACHE = 'stella-v5';
-const SHELL_SUFFIX = ['/', '/index.html', '/app.js', '/app-v4.js', '/app-v5.js', '/app-v6.js', '/app-v7.js', '/styles.css', '/styles-v4.css', '/styles-v5.css', '/styles-v6.css', '/styles-v7.css', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+const CACHE = 'stella-v6';
+const SHELL_SUFFIX = ['/', '/index.html', '/app.js', '/app-v4.js', '/app-v5.js', '/app-v6.js', '/app-v7.js', '/app-v8.js', '/styles.css', '/styles-v4.css', '/styles-v5.css', '/styles-v6.css', '/styles-v7.css', '/styles-v8.css', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 const ASSETS = [
   './',
   './index.html',
@@ -8,14 +8,17 @@ const ASSETS = [
   './app-v5.js',
   './app-v6.js',
   './app-v7.js',
+  './app-v8.js',
   './styles.css',
   './styles-v4.css',
   './styles-v5.css',
   './styles-v6.css',
   './styles-v7.css',
+  './styles-v8.css',
   './manifest.json',
   './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-512.png',
+  './assets/geo_poster_2026-07-30.jpg'
 ];
 
 self.addEventListener('install', e => {
