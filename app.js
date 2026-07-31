@@ -152,6 +152,36 @@
     if (!r.ok) throw new Error('UPSERT ' + r.status + ' ' + (await r.text()).slice(0, 200));
   }
 
+  // ---- 合并策略：云端优先，但保留本地独有数据 ----
+  function mergePayloads(local, server) {
+    if (!local || typeof local !== 'object') local = {};
+    if (!server || typeof server !== 'object') server = {};
+    const res = {};
+    const keys = new Set([...Object.keys(local), ...Object.keys(server)]);
+    const dateArrayMaps = ['diets', 'fitness', 'weights'];
+    for (const k of keys) {
+      if (dateArrayMaps.includes(k)) {
+        res[k] = {};
+        const lm = local[k] || {};
+        const sm = server[k] || {};
+        const dates = new Set([...Object.keys(lm), ...Object.keys(sm)]);
+        for (const d of dates) {
+          const la = Array.isArray(lm[d]) ? lm[d] : [];
+          const sa = Array.isArray(sm[d]) ? sm[d] : [];
+          // 云端该日期非空则优先采用；否则保留本地；都没有则为空数组
+          res[k][d] = sa.length ? sa.slice() : (la.length ? la.slice() : []);
+        }
+      } else if (k === 'todos' || k === '_inbox' || k === 'biz_inbox' || k === 'reviews' || k === 'learns' || k === 'news') {
+        const la = Array.isArray(local[k]) ? local[k] : [];
+        const sa = Array.isArray(server[k]) ? server[k] : [];
+        res[k] = sa.concat(la);
+      } else {
+        res[k] = (k in server) ? server[k] : local[k];
+      }
+    }
+    return res;
+  }
+
   // ---- 推送（防抖） ----
   let pushTimer = null;
   let cloudEnabled = true;
@@ -167,6 +197,11 @@
     if (!navigator.onLine) { setStatus('offline'); return; }
     const ts = new Date().toISOString();
     try {
+      // 先拉云端合并，避免覆盖其它端更新的数据
+      const row = await sbGetRow();
+      if (row && row.payload) {
+        data = mergePayloads(data, row.payload);
+      }
       await sbUpsertRow(data, ts);
       const m = loadMeta();
       m.syncedAt = ts;
@@ -198,15 +233,16 @@
       const localMod = meta.localModified ? Date.parse(meta.localModified) : 0;
       if (row) {
         const remoteTs = row.updated_at ? Date.parse(row.updated_at) : 0;
-        if (remoteTs > syncedAt && localMod <= syncedAt) {
-          // 远端更新且本地无未同步改动 → 采用远端
-          localStorage.setItem(DB_KEY, JSON.stringify(row.payload || {}));
+        if (remoteTs > syncedAt) {
+          // 远端有更新 → 合并到本地（云端优先但保留本地独有数据）
+          data = mergePayloads(data, row.payload || {});
+          localStorage.setItem(DB_KEY, JSON.stringify(data));
           saveMeta({ syncedAt: row.updated_at, localModified: row.updated_at, device: row.device });
           setStatus('online');
           location.reload();
           return;
         }
-        // 否则以本地为准，上传覆盖
+        // 本地有未同步改动 → 合并后上传
         await doPush();
       } else {
         await doPush(); // 远端无记录 → 上传本地
