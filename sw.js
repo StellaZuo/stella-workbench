@@ -1,20 +1,13 @@
-const CACHE = 'stella-v12';
-const SHELL_SUFFIX = ['/', '/index.html', '/app-v11.js', '/styles.css', '/styles-v11.css', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+const CACHE = 'stella-v13';
+const SHELL_SUFFIX = ['/', '/index.html', '/app-v12.js', '/styles-v10.css', '/manifest.json'];
 const ASSETS = [
   './',
   './index.html',
-  './app-v11.js',
-  './styles.css',
-  './styles-v4.css',
-  './styles-v5.css',
-  './styles-v6.css',
-  './styles-v7.css',
-  './styles-v8.css',
-  './styles-v9.css',
+  './app-v12.js',
   './styles-v10.css',
   './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
+  './icons/icon-192-v3.png',
+  './icons/icon-512-v3.png',
   './assets/geo_poster_2026-07-30.jpg'
 ];
 
