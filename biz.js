@@ -18,6 +18,7 @@
   function today() { const d = new Date(); const z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`; }
   function fmt(s) { if (!s) return '—'; const [y, m, d] = s.split('-'); return `${+m}月${+d}日`; }
   function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
   function flash(msg) {
     let t = $('#toast');
     if (!t) { t = document.createElement('div'); t.id = 'toast'; t.style.cssText = 'position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:20px;font-size:13px;z-index:9999;opacity:0;transition:.25s;pointer-events:none;max-width:80%'; document.body.appendChild(t); }
@@ -242,17 +243,20 @@
   function renderCtLib(root) {
     const cc = biz.content;
     function isImg(u) { return typeof u === 'string' && /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(u); }
+    function imgThumb(u, alt) { return isImg(u) ? `<img src="${escapeAttr(u)}" alt="${escapeAttr(alt || 'pic')}" class="ct-thumb" onclick="window.open('${escapeAttr(u)}','_blank')">` : ''; }
     function imgBtn(u) { return isImg(u) ? ` <button class="sm view-img" data-src="${escapeAttr(u)}">查看图片</button>` : ''; }
     function block(title, arr, key, ph1, ph2) {
+      const isImageLib = key === 'images';
       const items = arr.map((it, i) => {
         const imgSrc = it.image || it.url || '';
-        return `<div class="li"><span><b>${escapeHtml(it.name)}</b>${it.url ? ' · <a href="' + escapeAttr(it.url) + '" target="_blank">链接</a>' : ''}${it.note ? ' · ' + escapeHtml(it.note) : ''}${imgBtn(imgSrc)}</span><button class="del" data-k="${key}" data-i="${i}">×</button></div>`;
+        const thumb = isImageLib ? imgThumb(imgSrc, it.name) : imgThumb(it.image || '', it.name);
+        return `<div class="li ct-li">${thumb}<span><b>${escapeHtml(it.name)}</b>${(!isImageLib && it.url) ? ' · <a href="' + escapeAttr(it.url) + '" target="_blank">链接</a>' : ''}${it.note ? ' · ' + escapeHtml(it.note) : ''}${!isImageLib ? imgBtn(it.image || '') : ''}</span><button class="del" data-k="${key}" data-i="${i}">×</button></div>`;
       }).join('');
       return `<div class="card"><h2>${title}</h2><div class="li-list">${items || '<div class="meta">暂无</div>'}</div>
         <div class="row"><input id="n-${key}" placeholder="${ph1}" style="flex:1" /><input id="u-${key}" placeholder="${ph2 || '链接/备注'}" style="flex:1" /><button class="sm" id="b-${key}">加</button></div></div>`;
     }
     root.innerHTML = block('🗂 素材池', cc.materials, 'materials', '素材名', '链接/备注') +
-      block('🖼 图片库', cc.images, 'images', '图片名', '链接') +
+      block('🖼 图片库', cc.images, 'images', '图片名', '图片链接') +
       block('💬 话题库', cc.topics, 'topics', '话题 / 角度', '备注');
     ['materials', 'images', 'topics'].forEach(key => {
       $('#b-' + key, root).onclick = () => { const n = $('#n-' + key, root).value.trim(); if (!n) return; biz.content[key].unshift({ name: n, url: $('#u-' + key, root).value.trim() }); save(); renderCtLib(root); };
