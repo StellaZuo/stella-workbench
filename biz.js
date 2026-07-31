@@ -241,8 +241,13 @@
   }
   function renderCtLib(root) {
     const cc = biz.content;
+    function isImg(u) { return typeof u === 'string' && /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(u); }
+    function imgBtn(u) { return isImg(u) ? ` <button class="sm view-img" data-src="${escapeAttr(u)}">查看图片</button>` : ''; }
     function block(title, arr, key, ph1, ph2) {
-      const items = arr.map((it, i) => `<div class="li"><span><b>${escapeHtml(it.name)}</b>${it.url ? ' · <a href="${escapeHtml(it.url)}" target="_blank">链接</a>' : ''}${it.note ? ' · ' + escapeHtml(it.note) : ''}</span><button data-k="${key}" data-i="${i}">×</button></div>`).join('');
+      const items = arr.map((it, i) => {
+        const imgSrc = it.image || it.url || '';
+        return `<div class="li"><span><b>${escapeHtml(it.name)}</b>${it.url ? ' · <a href="' + escapeAttr(it.url) + '" target="_blank">链接</a>' : ''}${it.note ? ' · ' + escapeHtml(it.note) : ''}${imgBtn(imgSrc)}</span><button class="del" data-k="${key}" data-i="${i}">×</button></div>`;
+      }).join('');
       return `<div class="card"><h2>${title}</h2><div class="li-list">${items || '<div class="meta">暂无</div>'}</div>
         <div class="row"><input id="n-${key}" placeholder="${ph1}" style="flex:1" /><input id="u-${key}" placeholder="${ph2 || '链接/备注'}" style="flex:1" /><button class="sm" id="b-${key}">加</button></div></div>`;
     }
@@ -252,7 +257,8 @@
     ['materials', 'images', 'topics'].forEach(key => {
       $('#b-' + key, root).onclick = () => { const n = $('#n-' + key, root).value.trim(); if (!n) return; biz.content[key].unshift({ name: n, url: $('#u-' + key, root).value.trim() }); save(); renderCtLib(root); };
     });
-    $all('.li-list button', root).forEach(b => b.onclick = () => { biz.content[b.dataset.k].splice(+b.dataset.i, 1); save(); renderCtLib(root); });
+    $all('.li-list button.del', root).forEach(b => b.onclick = () => { biz.content[b.dataset.k].splice(+b.dataset.i, 1); save(); renderCtLib(root); });
+    $all('.li-list button.view-img', root).forEach(b => b.onclick = () => { window.open(b.dataset.src, '_blank'); });
   }
   function renderCtIdea(root) {
     const cc = biz.content;
@@ -551,9 +557,12 @@
           tab = 'content';
         } else {
           const cat = (p.cat && biz.content[p.cat]) ? p.cat : 'materials';
+          const imgSrc = p.imageUrl || p.poster_path || '';
+          const pubImg = imgSrc ? './assets/' + imgSrc.replace(/^.*[\\/]/, '') : '';
           if (cat === 'ideas') biz.content.ideas.unshift({ dir: p.name || seed.title || '选题', hot: p.hot || '', form: p.form || '', date: today() });
           else if (cat === 'articles') biz.content.articles.unshift({ title: p.name || seed.title || '文案', body: p.body || '', angle: p.angle || '里里同步', date: today() });
-          else biz.content[cat].unshift({ name: p.name || seed.title || '素材', url: p.url || '' });
+          else biz.content[cat].unshift({ name: p.name || seed.title || '素材', url: p.url || '', image: pubImg });
+          if (pubImg) biz.content.images.unshift({ name: p.name || seed.title || '素材', url: pubImg });
           tab = 'content';
         }
       } else {
